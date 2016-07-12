@@ -1,4 +1,4 @@
-# birdie-admin
+# birdie-tournaments
 
 > A Vue.js project
 
