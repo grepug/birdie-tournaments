@@ -33,9 +33,12 @@ export const groupArr = function (arr, groups) {
   const lenPerGroup = Math.floor(len / groups)
   var begin = 0
   var end = lenPerGroup
-  return _.range(groups).map((el, i) => {
+  return _.range(groups).map((el, i, originArr) => {
+    if (i === originArr.length - 1) {
+      if (end !== i + 1) end = i + 1
+    }
+    console.log(end)
     var ret = arr.slice(begin, end)
-    console.log(ret)
     begin += lenPerGroup
     end += lenPerGroup
     return ret

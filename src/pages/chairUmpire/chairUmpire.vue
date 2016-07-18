@@ -3,7 +3,7 @@ div
   navbar-view
     .left
       a.link(href="javascript:;", @click="back") 返回
-    .center 主裁判
+    .center 赛事
     .right
       a.link(href="javascript:;")
   main

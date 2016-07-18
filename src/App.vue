@@ -7,6 +7,8 @@ div
       a.link(href="javascript:;")
   main
     cells(type="access")
+      link-cell(v-link="{name: 'createTournament'}")
+        span(slot="body") 创建赛事
       link-cell(v-link="{path: '/chairUmpire'}")
         span(slot="body") 我是主裁判
       link-cell(v-link="{path: '/realtimeTournaments'}")

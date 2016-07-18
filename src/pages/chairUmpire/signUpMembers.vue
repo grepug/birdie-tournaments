@@ -134,7 +134,10 @@ div
       window.vm = this
       window.groupArr = groupArr
       if (!this.myChairUmpiredTournaments.length) {
-        this.addChairUmpiredTournaments((userObjIds) => this.addOthersUserObj(userObjIds))
+        this.addChairUmpiredTournaments((userObjIds) => {
+          console.log(userObjIds)
+          this.addOthersUserObj(userObjIds)
+        })
       }
     }
   }

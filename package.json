@@ -7,12 +7,15 @@
   "scripts": {
     "dev": "node build/dev-server.js",
     "build": "node build/build.js",
+    "copy": "node build/copy.js",
+    "cp": "npm run build && npm run copy",
     "unit": "karma start test/unit/karma.conf.js --single-run",
     "e2e": "node test/e2e/runner.js",
     "test": "npm run unit && npm run e2e",
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
+    "@grepug/nicetime": "^1.0.1",
     "avoscloud-sdk": "^0.6.10",
     "babel-runtime": "^6.0.0",
     "fastclick": "^1.0.6",
