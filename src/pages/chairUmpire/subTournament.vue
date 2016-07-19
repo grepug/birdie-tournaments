@@ -3,10 +3,11 @@ div
   navbar-view
     .left
       a.link(href="javascript:;", @click="back") 返回
-    .center {{subTournament.name}}
+    .center(v-if="!$loadingRouteData") {{subTournament.name}}
     .right
       a.link(href="javascript:;")
-  main
+  toast(type="loading", v-show="$loadingRouteData") 加载中...
+  main(v-if="!$loadingRouteData")
     cells-title 比赛信息
     cells
       link-cell()
@@ -18,13 +19,18 @@ div
       link-cell()
         span(slot="body") 得分制
         span(slot="footer") {{subTournament.scoringSys}}
+      link-cell
+        span(slot="body") 状态
+        span(slot="footer") {{subTournament.state}}
     cells-title 操作
     cells(type="access")
-      link-cell(@click="goSignUpMembers")
-        span(slot="body") 查看报名详情
-      link-cell
-        span(slot="body") 排阵
-      link-cell
+      link-cell(@click="go('chairUmpireSignUpMembers')")
+        span(slot="body") 查看报名名单 & 排阵
+      link-cell(@click="go('chairUmpireViewOrders')")
+        span(slot="body") 查看对阵表 & 指定裁判
+      link-cell(@click="go('chairUmpireViewOrders')")
+        span(slot="body") 比赛队列
+      link-cell(@click="go('chairUmpireSubTournamentStart')")
         span(slot="body") 开始比赛
 
 </template>
@@ -38,7 +44,8 @@ div
   import {
     Cells,
     LinkCell,
-    CellsTitle
+    CellsTitle,
+    Toast
   } from 'vue-weui'
 
   export default {
@@ -46,7 +53,13 @@ div
       navbarView,
       Cells,
       LinkCell,
-      CellsTitle
+      CellsTitle,
+      Toast
+    },
+    route: {
+      data () {
+        return this.addChairUmpiredTournaments()
+      }
     },
     vuex: {
       getters: {
@@ -68,16 +81,15 @@ div
       back () {
         window.history.back()
       },
-      goSignUpMembers () {
+      go (name) {
         this.$router.go({
-          name: 'chairUmpireSignUpMembers',
+          name,
           query: this.$route.query
         })
       }
     },
     ready () {
       window.vm = this
-      if (!this.myChairUmpiredTournaments.length) this.addChairUmpiredTournaments()
     }
   }
 </script>

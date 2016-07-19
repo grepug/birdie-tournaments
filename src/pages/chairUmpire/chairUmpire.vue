@@ -6,7 +6,8 @@ div
     .center 赛事
     .right
       a.link(href="javascript:;")
-  main
+  toast(type="loading", v-show="$loadingRouteData") 加载中...
+  main(v-if="!$loadingRouteData")
     mt-cell(is-link="", v-link="{path: '/chairUmpire/tournament', query: {main: el.objectId}}", v-for="el in myChairUmpiredTournaments")
       span(slot="title") {{el.name}}
 </template>
@@ -15,11 +16,15 @@ div
   import {
     navbarView
   } from '../../components'
+  import {
+    Toast
+  } from 'vue-weui'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
 
   export default {
     components: {
-      navbarView
+      navbarView,
+      Toast
     },
     vuex: {
       getters: {
@@ -29,6 +34,11 @@ div
         addChairUmpiredTournaments
       }
     },
+    route: {
+      data () {
+        return this.addChairUmpiredTournaments()
+      }
+    },
     methods: {
       back () {
         window.history.back()
@@ -36,7 +46,6 @@ div
     },
     ready () {
       window.vm = this
-      this.addChairUmpiredTournaments()
     }
   }
 </script>

@@ -7,13 +7,18 @@ div
     .right
       a.link(href="javascript:;", @click="openSortable", v-if="sortableState === 'closed'") 排阵
       a.link(href="javascript:;", @click="save", v-if="sortableState === 'sorting'") 保存
-  main
-    div.clearfix(v-for="(index, group) in signUpMembersGrouped")
-      cells-title Group {{index + 1}}
-      cells(type="access", v-if="isSingle(subTournament.discipline)")
-        link-cell(v-for="(index2, el) in group", :data-index="index", :data-index2="index2")
+  toast(type="loading", v-show="true", v-if="$loadingRouteData") 加载中...
+  main(v-if="!$loadingRouteData")
+    template(v-if="subTournament.state === 'signingUp'")
+      cells-title {{subTournament.name}}报名列表
+      cells(type="access", v-if="signUpMembers && signUpMembers.length")
+        link-cell(v-for="(index, el) in signUpMembers", :data-index="index")
           span(slot="body") {{el.nickname}}
           span(slot="footer") {{el.sex}}
+      .group.clearfix(v-for="(index, group) in groups")
+        cells-title 第{{index + 1}}组
+        cells(type="access")
+
 </template>
 
 <script>
@@ -23,7 +28,8 @@ div
   import {
     Cells,
     LinkCell,
-    CellsTitle
+    CellsTitle,
+    Toast
   } from 'vue-weui'
   import _ from 'underscore'
   import AV from '../../js/AV'
@@ -37,7 +43,8 @@ div
       navbarView,
       Cells,
       LinkCell,
-      CellsTitle
+      CellsTitle,
+      Toast
     },
     vuex: {
       getters: {
@@ -50,14 +57,22 @@ div
         addOthersUserObj
       }
     },
+    route: {
+      data ({next}) {
+        return this.addChairUmpiredTournaments()
+      }
+    },
     data () {
       return {
-        sortableState: 'closed'
+        sortableState: 'closed',
+        groups: _.range(4),
+        groupsList: [],
+        playoffsList: []
       }
     },
     computed: {
       subTournament () {
-        if (!this.myChairUmpiredTournaments.length) return []
+        if (!this.myChairUmpiredTournaments.length) return {}
         var {query} = this.$route
         var r = _.findWhere(this.myChairUmpiredTournaments, {objectId: query.main})
         return _.findWhere(r.subTournaments, {objectId: query.sub})
@@ -110,11 +125,11 @@ div
         this.sortableState = 'sorting'
       },
       save () {
-        var groupOrder = Array.prototype.map.call(document.querySelectorAll('main > div'), el => {
+        if (this.subTournament.state !== 'signingUp') return
+        var groupOrder = Array.prototype.map.call(document.querySelectorAll('main > .group'), el => {
           return Array.prototype.map.call(el.querySelectorAll('[data-index]'), el => {
             var index = el.getAttribute('data-index')
-            var index2 = el.getAttribute('data-index2')
-            return this.signUpMembersGrouped[index][index2]
+            return this.signUpMembers[index]
           })
         })
         console.log(JSON.parse(JSON.stringify(groupOrder)))
@@ -133,12 +148,6 @@ div
     ready () {
       window.vm = this
       window.groupArr = groupArr
-      if (!this.myChairUmpiredTournaments.length) {
-        this.addChairUmpiredTournaments((userObjIds) => {
-          console.log(userObjIds)
-          this.addOthersUserObj(userObjIds)
-        })
-      }
     }
   }
 </script>
@@ -160,7 +169,7 @@ div
 main {
   width: 100%;
   // display: flex;
-  > div {
+  > .group {
     // display: inline-block;
     float: left;
     width: 50%;

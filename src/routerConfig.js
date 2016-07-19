@@ -22,6 +22,14 @@ export default function (router) {
       name: 'chairUmpireSignUpMembers',
       component: require('./pages/chairUmpire/signUpMembers')
     },
+    '/chairUmpire/tournament/subTournament/viewOrders': {
+      name: 'chairUmpireViewOrders',
+      component: require('./pages/chairUmpire/viewOrders')
+    },
+    '/chairUmpire/tournament/subTournament/start': {
+      name: 'chairUmpireSubTournamentStart',
+      component: require('./pages/chairUmpire/start')
+    },
     '/tournaments/create': {
       name: 'createTournament',
       component: require('./pages/tournament/create')

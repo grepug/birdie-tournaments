@@ -7,7 +7,8 @@ div
     .right
       a.link(href="javascript:;", @click="edit", v-if="!editState") 编辑
       a.link(href="javascript:;", @click="edit", v-if="editState") 完成
-  main
+  toast(type="loading", v-show="$loadingRouteData") 加载中...
+  main(v-if="!$loadingRouteData")
     cells(v-if="!$route.query.edit")
       cell()
         span(slot="body") 赛事名
@@ -39,7 +40,8 @@ div
     Cells,
     Cell,
     CellsTitle,
-    InputCell
+    InputCell,
+    Toast
   } from 'vue-weui'
   import AV from '../../js/AV'
   import _ from 'underscore'
@@ -52,7 +54,13 @@ div
       Cells,
       Cell,
       CellsTitle,
-      InputCell
+      InputCell,
+      Toast
+    },
+    route: {
+      data () {
+        return this.addChairUmpiredTournaments()
+      }
     },
     vuex: {
       getters: {
@@ -107,7 +115,6 @@ div
     },
     ready () {
       window.vm = this
-      if (!this.myChairUmpiredTournaments.length) this.addChairUmpiredTournaments()
     }
   }
 </script>
