@@ -12,7 +12,7 @@ div
     template(v-for="(index, el) in court", track-by="$index")
       cells(type="form")
         input-cell(type="text", label="场地名称", placeholder="请输入场地名称，如1号场地", :value.sync="court[index].name")
-        select-cell(:after="true", :options="umpireOptions", :value.sync="court[index].umpireSelected")
+        select-cell(:after="true", :options="umpireOptions", :selected.sync="court[index].umpireSelected")
           span(slot="header") 裁判
     .buttons
       a.button(@click="addCourt", href="javascript:;") 添加场地
@@ -53,7 +53,8 @@ div
     vuex: {
       getters: {
         myChairUmpiredTournaments: ({tournaments}) => tournaments.chairUmpiredTournaments,
-        otherUserObjs: ({user}) => user.userObjs
+        otherUserObjs: ({user}) => user.userObjs,
+        userObj: ({user}) => user.userObj
       },
       actions: {
         addOthersUserObj,
@@ -70,7 +71,7 @@ div
       umpireOptions () {
         if (!this.myChairUmpiredTournaments.length) return []
         return [{text: '请选择', value: ''}].concat(this.subTournament.umpires.map(el => {
-          var r = _.findWhere(this.otherUserObjs, {objectId: el})
+          var r = _.findWhere(this.otherUserObjs, {objectId: el}) || this.userObj
           return {
             text: r.nickname,
             value: el

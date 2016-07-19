@@ -8,12 +8,10 @@ export const addOthersUserObj = function ({dispatch, state}, userObjIds) {
     if (!r && id !== state.user.userObj.objectId) return id
   }).filter(x => x)
   if (!unstoredObjs.length) return
-  console.log(unstoredObjs)
   return AV.Cloud.run('user', {
     method: 'getUserObjByIds',
     userObjIds: unstoredObjs
   }).then(ret => {
-    console.log(ret)
     if (!ret || !ret.length) return
     dispatch('ADD_OTHER_USEROBJS', ret)
   }).catch(err => console.log(err))

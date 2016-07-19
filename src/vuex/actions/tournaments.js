@@ -5,11 +5,9 @@ import {isSingle} from '../../js/utils'
 
 export const addChairUmpiredTournaments = ({dispatch, state}) => {
   if (state.tournaments.chairUmpiredTournaments && state.tournaments.chairUmpiredTournaments.length) return Promise.resolve()
-  console.log(state)
   return AV.Cloud.run('tournament', {
     method: 'getMyChairUmpiredTournaments'
   }).then(ret => {
-    console.log(ret)
     dispatch('ADD_CHAIRUMPIRED_TOURNAMENTS', ret)
     var userObjIds = _.flatten(ret.map(el => el.subTournaments.map(el => {
       if (isSingle(el.discipline)) return el.signUpMembers.concat(el.umpires)
