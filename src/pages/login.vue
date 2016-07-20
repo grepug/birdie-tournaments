@@ -13,6 +13,11 @@
     components: {
       loginView
     },
+    route: {
+      canActivate () {
+        return !AV.User.current()
+      }
+    },
     data () {
       return {
         phone: '',
