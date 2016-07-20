@@ -34,7 +34,8 @@
     "vue-router": "^0.7.13",
     "vue-weui": "^0.3.2",
     "vuex": "^1.0.0-rc.2",
-    "weui": "^0.4.3"
+    "weui": "^0.4.3",
+    "wilddog": "^0.7.2"
   },
   "devDependencies": {
     "babel-core": "^6.0.0",

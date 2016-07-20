@@ -18,6 +18,10 @@ export default function (router) {
     '/chairUmpire/tournament/subTournament': {
       component: require('./pages/chairUmpire/subTournament')
     },
+    '/chairUmpire/tournament/subTournament/queue': {
+      name: 'chairUmpireQueue',
+      component: require('./pages/chairUmpire/queue')
+    },
     '/chairUmpire/tournament/subTournament/signUpMembers': {
       name: 'chairUmpireSignUpMembers',
       component: require('./pages/chairUmpire/signUpMembers')
