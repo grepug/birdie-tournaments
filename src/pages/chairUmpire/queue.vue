@@ -11,9 +11,13 @@ div
     dialog(v-show="dialogShow", type="confirm", title="添加队列", confirm-button="添加", cancel-button="取消", @weui-dialog-confirm="dialogConfirm", @weui-dialog-cancel="dialogCancel")
       cells(type="split")
         select-cell(:after="true", :options="preparingMatchesOptions", :selected.sync="selected")
-          span(slot="header") 准备中的比赛
+          span(slot="header") 选手
         select-cell(:after="true", :options="courtsOptions", :selected.sync="courtSelected")
           span(slot="header") 场地
+        select-cell(:after="true", :options="scoringSysOptions", :selected.sync="scoringSysSelected")
+          span(slot="header") 得分制
+        select-cell(:after="true", :options="bestOfOptions", :selected.sync="bestOfSelected")
+          span(slot="header") 局数
         switch-cell(name="switch", label="是否场地固定裁判", :on.sync="ifOneUmpire")
         select-cell(:after="true", :options="courtsOptions", :selected.sync="courtSelected", v-if="!ifOneUmpire")
           span(slot="header") 裁判
@@ -21,9 +25,13 @@ div
       cells(type="split")
         link-cell
           span(slot="header") 选手
-          span(slot="footer") {{teamsInEditing}}
+          span(slot="footer") {{teamsInEditing.vs}}
         select-cell(:after="true", :options="courtsOptions", :selected.sync="courtSelected")
           span(slot="header") 场地
+        select-cell(:after="true", :options="scoringSysOptions", :selected.sync="scoringSysSelected")
+          span(slot="header") 得分制
+        select-cell(:after="true", :options="bestOfOptions", :selected.sync="bestOfSelected")
+          span(slot="header") 局数
         switch-cell(name="switch", label="是否场地固定裁判", :on.sync="ifOneUmpire")
         select-cell(:after="true", :options="courtsOptions", :selected.sync="courtSelected", v-if="!ifOneUmpire")
           span(slot="header") 裁判
@@ -76,13 +84,6 @@ export default {
   route: {
     data () {
       var {query} = this.$route
-      // return AV.Cloud.run('tournamentRealtime', {
-      //   method: 'getPreparingMatches',
-      //   tournamentObjId: query.main,
-      //   subTournamentObjId: query.sub
-      // }).then(ret => {
-      //   this.preparingMatches = ret
-      // })
       const uri = `https://birdie2.wilddogio.com/tournaments/${query.main}/subTournaments/${query.sub}`
       var ref = new Wilddog(uri)
       return ref.on('value', (snapshot) => {
@@ -91,6 +92,9 @@ export default {
           var val = data.val()
           if (key === 'groups') {
             this.groups = val
+            this.addOthersUserObj(_.flatten(val.map(el => {
+              return el.teams.map(el => el.objectId)
+            })))
           }
           if (key === 'playoffs') {
             this.playoffs = val
@@ -126,7 +130,11 @@ export default {
       groups: [],
       courts: [],
       courtSelected: '',
-      ifOneUmpire: false
+      ifOneUmpire: false,
+      scoringSysOptions: [{text: '21分制', value: '21'}, {text: '15分制', value: '15'}, {text: '11分制', value: '11'}],
+      scoringSysSelected: '21',
+      bestOfOptions: [{text: '三局两胜', value: '3'}, {text: '一局一胜', value: '1'}, {text: '五局三胜', value: '5'}],
+      bestOfSelected: '3'
     }
   },
   computed: {
@@ -134,8 +142,11 @@ export default {
       var preparingMatches = _.flatten(this.groups.map((el, groupIndex) => {
         return el.matches.map((el, matchIndex) => {
           if (el.state === 'preparing') {
+            var text = el.teams.map(el => {
+              return (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+            }).join(' vs ')
             return {
-              text: el.teams.map(el => el.nickname).join(' vs '),
+              text,
               value: JSON.stringify({
                 stage: 'groups',
                 groupIndex,
@@ -157,15 +168,21 @@ export default {
     },
     thisQueue () {
       return _.map(this.queue, (val, key) => {
-        var {stage, courtIndex} = val
+        var {stage, courtIndex, matchSettings} = val
         if (stage.stage === 'groups') {
           var match = this.groups[stage.groupIndex].matches[stage.matchIndex]
           var umpire = (_.findWhere(this.otherUserObjs, {objectId: this.courts[courtIndex].umpire}) || this.userObj).nickname
+          var vs = match.teams.map(el => {
+            return (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+          }).join(' vs ')
           return {
-            vs: match.teams.map(el => el.nickname).join(' vs '),
+            vs,
             stage: `第${stage.groupIndex + 1}组 第${stage.matchIndex + 1}场`,
             court: this.courts[courtIndex].name,
-            umpire
+            courtIndex,
+            matchSettings,
+            umpire,
+            key
           }
         }
       })
@@ -179,7 +196,10 @@ export default {
       this.dialogShow = true
     },
     edit (index) {
-      this.teamsInEditing = this.thisQueue[index].vs
+      this.teamsInEditing = this.thisQueue[index]
+      this.scoringSysSelected = this.teamsInEditing.matchSettings.scoringSys
+      this.bestOfSelected = this.teamsInEditing.matchSettings.bestOf
+      this.courtSelected = this.teamsInEditing.courtIndex
       this.editDialogShow = true
     },
     dialogConfirm () {
@@ -188,13 +208,33 @@ export default {
         method: 'queueUp',
         tournamentObjId: query.main,
         subTournamentObjId: query.sub,
-        stage: JSON.parse(this.selected)
+        stage: JSON.parse(this.selected),
+        courtIndex: this.courtSelected,
+        matchSettings: {
+          scoringSys: this.scoringSysSelected,
+          bestOf: this.bestOfSelected
+        }
       }).then(ret => {
         console.log(ret)
+        this.dialogShow = false
       }).catch(err => console.log(err))
     },
     editDialogConfirm () {
-
+      const {query} = this.$route
+      return AV.Cloud.run('tournamentRealtime', {
+        method: 'updateQueue',
+        tournamentObjId: query.main,
+        subTournamentObjId: query.sub,
+        key: this.teamsInEditing.key,
+        courtIndex: this.courtSelected,
+        matchSettings: {
+          scoringSys: this.scoringSysSelected,
+          bestOf: this.bestOfSelected
+        }
+      }).then(ret => {
+        console.log(ret)
+        this.editDialogShow = false
+      }).catch(err => console.log(err))
     },
     dialogCancel () {
       this.dialogShow = false
