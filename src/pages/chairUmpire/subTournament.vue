@@ -28,7 +28,7 @@ div
         span(slot="body") 查看报名名单 & 排阵
       link-cell(@click="go('chairUmpireViewOrders')")
         span(slot="body") 查看对阵表 & 指定裁判
-      link-cell(@click="go('chairUmpireViewOrders')")
+      link-cell(@click="go('chairUmpireQueue')")
         span(slot="body") 比赛队列
       link-cell(@click="go('chairUmpireSubTournamentStart')")
         span(slot="body") 开始比赛
