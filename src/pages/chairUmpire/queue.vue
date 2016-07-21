@@ -67,6 +67,7 @@ import {
 import _ from 'underscore'
 import AV from '../../js/AV'
 import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
+import {isSingle} from '../../js/utils'
 import {addOthersUserObj} from '../../vuex/actions/user'
 
 export default {
@@ -90,21 +91,26 @@ export default {
         snapshot.forEach(data => {
           var key = data.key()
           var val = data.val()
-          if (key === 'groups') {
-            this.groups = val
-            this.addOthersUserObj(_.flatten(val.map(el => {
-              return el.teams.map(el => el.objectId)
-            })))
-          }
-          if (key === 'playoffs') {
-            this.playoffs = val
-          }
-          if (key === 'queue') {
-            this.queue = val
-          }
-          if (key === 'courts') {
-            this.courts = val
-            this.addOthersUserObj(val.map(el => el.umpire))
+          switch (key) {
+            case 'groups':
+              this.groups = val
+              this.addOthersUserObj(_.flatten(val.map(el => {
+                return el.teams.map(el => el.objectId)
+              })))
+              break
+            case 'playoffs':
+              this.playoffs = val
+              break
+            case 'queue':
+              this.queue = val
+              break
+            case 'courts':
+              this.courts = val
+              this.addOthersUserObj(val.map(el => el.umpire))
+              break
+            case 'discipline':
+              this.isSingle = isSingle(val)
+              break
           }
         })
       })
@@ -121,6 +127,7 @@ export default {
   },
   data () {
     return {
+      isSingle: null,
       preparingMatches: [],
       dialogShow: false,
       editDialogShow: false,
@@ -172,9 +179,14 @@ export default {
         if (stage.stage === 'groups') {
           var match = this.groups[stage.groupIndex].matches[stage.matchIndex]
           var umpire = (_.findWhere(this.otherUserObjs, {objectId: this.courts[courtIndex].umpire}) || this.userObj).nickname
-          var vs = match.teams.map(el => {
-            return (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
-          }).join(' vs ')
+          var vs
+          if (this.isSingle) { // 单打
+            vs = match.teams.map(el => {
+              return (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+            }).join(' vs ')
+          } else { // 双打
+            // to do
+          }
           return {
             vs,
             stage: `第${stage.groupIndex + 1}组 第${stage.matchIndex + 1}场`,

@@ -129,7 +129,7 @@ div
         var groupOrder = Array.prototype.map.call(document.querySelectorAll('main > .group'), el => {
           return Array.prototype.map.call(el.querySelectorAll('[data-index]'), el => {
             var index = el.getAttribute('data-index')
-            return this.signUpMembers[index]
+            return this.signUpMembers[index].objectId
           })
         })
         console.log(JSON.parse(JSON.stringify(groupOrder)))

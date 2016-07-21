@@ -25,9 +25,9 @@ div
     cells-title 操作
     cells(type="access")
       link-cell(@click="go('chairUmpireSignUpMembers')")
-        span(slot="body") 查看报名名单 & 排阵
+        span(slot="body") 报名名单 & 排阵
       link-cell(@click="go('chairUmpireViewOrders')")
-        span(slot="body") 查看对阵表 & 指定裁判
+        span(slot="body") 对阵表
       link-cell(@click="go('chairUmpireQueue')")
         span(slot="body") 比赛队列
       link-cell(@click="go('chairUmpireSubTournamentStart')")
