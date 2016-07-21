@@ -2,7 +2,10 @@ import _ from 'underscore'
 import {beArray} from '../../js/utils'
 
 const state = {
-  chairUmpiredTournaments: []
+  chairUmpiredTournaments: [],
+  matchResults: [],
+  tournaments: [],
+  myUmpiredTournaments: []
 }
 
 const mutations = {
@@ -11,6 +14,15 @@ const mutations = {
       var r = _.findWhere(state.chairUmpiredTournaments, {objectId: el.objectId})
       if (!r) state.chairUmpiredTournaments.push(el)
     })
+  },
+  ADD_TOURNAMENTS (state, tournamentObjs) {
+    beArray(tournamentObjs).forEach(el => {
+      var r = _.findWhere(state.tournaments, {objectId: el.objectId})
+      if (!r) state.tournaments.push(el)
+    })
+  },
+  ADD_MY_UMPIRED_TOURNAMENTS (state, tournaments) {
+    state.myUmpiredTournaments = tournaments
   }
 }
 

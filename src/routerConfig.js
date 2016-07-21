@@ -34,6 +34,14 @@ export default function (router) {
       name: 'chairUmpireSubTournamentStart',
       component: require('./pages/chairUmpire/start')
     },
+    '/umpire': {
+      name: 'umpire',
+      component: require('./pages/umpire/index')
+    },
+    '/umpire/subTournament': {
+      name: 'umpireSubTournament',
+      component: require('./pages/umpire/subTournament')
+    },
     '/tournaments/create': {
       name: 'createTournament',
       component: require('./pages/tournament/create')
