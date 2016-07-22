@@ -42,6 +42,10 @@ export default function (router) {
       name: 'umpireSubTournament',
       component: require('./pages/umpire/subTournament')
     },
+    '/umpire/scoringPage': {
+      name: 'umpireScoringPage',
+      component: require('./pages/umpire/scoringPage')
+    },
     '/tournaments/create': {
       name: 'createTournament',
       component: require('./pages/tournament/create')

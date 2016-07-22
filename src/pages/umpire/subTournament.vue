@@ -12,9 +12,9 @@ div
         span(slot="header") 场地
         span(slot="footer") {{myCourt}}
     cells-title 正在进行
-    cells
+    cells(type="access")
       link-cell(v-for="el in ongoings", v-if="ongoings.length")
-        span(slot="header") {{el.vs}}
+        span(slot="header") {{el}}
         span(slot="footer")
       link-cell(v-if="!ongoings.length")
         span(slot="header") 还没有进行中的比赛
@@ -33,9 +33,11 @@ div
     Cells, LinkCell, CellsTitle
   } from 'vue-weui'
   import _ from 'underscore'
-  import {historyBack, isSingle} from '../../js/utils'
-  import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
+  import {historyBack} from '../../js/utils'
+  // import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
   import {addOthersUserObj} from '../../vuex/actions/user'
+  import {getUserObj} from '../../js/methods'
+  import {subTournamentRealtime} from '../../js/routeData'
 
   export default {
     components: {
@@ -43,38 +45,7 @@ div
       Cells, LinkCell, CellsTitle
     },
     route: {
-      data () {
-        var {query} = this.$route
-        const uri = `https://birdie2.wilddogio.com/tournaments/${query.main}/subTournaments/${query.sub}`
-        var ref = new Wilddog(uri)
-        return ref.on('value', (snapshot) => {
-          snapshot.forEach(data => {
-            var key = data.key()
-            var val = data.val()
-            switch (key) {
-              case 'groups':
-                this.groups = val
-                this.addOthersUserObj(_.flatten(val.map(el => {
-                  return el.teams.map(el => el.objectId)
-                })))
-                break
-              case 'playoffs':
-                this.playoffs = val
-                break
-              case 'queue':
-                this.queue = val
-                break
-              case 'courts':
-                this.courts = val
-                this.addOthersUserObj(val.map(el => el.umpire))
-                break
-              case 'discipline':
-                this.isSingle = isSingle(val)
-                break
-            }
-          })
-        })
-      }
+      data: subTournamentRealtime
     },
     vuex: {
       getters: {
@@ -103,7 +74,7 @@ div
             var vs
             if (this.isSingle) { // 单打
               vs = match.teams.map(el => {
-                return (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+                return this.getUserObj(el.objectId)[0].nickname
               }).join(' vs ')
             } else { // 双打
               // to do
@@ -126,7 +97,7 @@ div
           var match = this.groups[stage.groupIndex].matches[stage.matchIndex]
           if (this.isSingle) {
             return match.teams.map(el => {
-              return (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+              return this.getUserObj(el.objectId)[0].nickname
             }).join(' vs ')
           }
         }).filter(x => x)
@@ -141,8 +112,12 @@ div
     },
     methods: {
       historyBack,
+      getUserObj,
       go (index) {
-
+        this.$router.go({
+          name: 'umpireScoringPage',
+          query: _.extend(this.$route.query, {key: this.myQueue[index].key})
+        })
       }
     },
     ready () {
