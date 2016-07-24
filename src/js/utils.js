@@ -23,6 +23,16 @@ export const beArray = function (param) {
   return [param]
 }
 
+export const arr2Obj = function (arr) {
+  var obj = {}
+  arr.filter(x => {
+    return x === 0 ? true : x
+  }).forEach((el, index) => {
+    obj[index] = el
+  })
+  return obj
+}
+
 export const historyBack = function () {
   var location = window.location.href
   window.history.back()

@@ -1,4 +1,4 @@
-// import _ from 'underscore'
+import _ from 'underscore'
 
 const state = {
   matchSettings: {},
@@ -22,7 +22,8 @@ const state = {
   gameIntervalTimer: 0,
   matchIds: {},
   withdrawl: null,
-  results: null
+  results: null,
+  lastScoreDate: null
 }
 
 const mutations = {
@@ -82,6 +83,15 @@ const mutations = {
   },
   SET_MATCH_SETTINGS (state, obj) {
     state.matchSettings = obj
+  },
+  MATCH_RECOVER (state, obj) {
+    _.extend(state, obj)
+  },
+  MATCH_REVERT (state, obj) {
+    _.extend(state, obj)
+  },
+  SET_CLOCK (state, clock) {
+    state.lastScoreDate = clock
   }
 }
 

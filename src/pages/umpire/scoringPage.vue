@@ -15,7 +15,9 @@ div
         select-cell(:after="true", :options="serviceTeamOptions", :selected.sync="serviceTeamSelected")
           span(slot="header") 发球选手
     dialog(v-if="isGameInterval", type="alert", title="中场间歇", confirm-button="取消间歇", @weui-dialog-confirm="removeGameInterval")
-        h4(style="text-align: center") 中场间歇还有{{gameIntervalTimer}}秒
+      h4(style="text-align: center") 中场间歇还有{{gameIntervalTimer}}秒
+    toast(type="loading", v-show="revertingToastShow") 撤销中
+    toast(type="loading", v-show="loadingToastShow") 加载中...
     cells
       link-cell()
         span(slot="body") 得分
@@ -34,7 +36,7 @@ div
         span(slot="footer") {{scoringSysCN}}
     .buttons
       a.button(href="javascript:;", @click="undo") 撤销
-      a.button(href="javascript:;", @click="pause") 暂停
+      a.button(href="javascript:;") 暂停
       a.button(href="javascript:;", @click="matchComplete", v-show="matchCompleted") 完成
 </template>
 
@@ -45,14 +47,15 @@ import {
 } from '../../components'
 import {
   Dialog,
-  Cells, LinkCell, InputCell, SelectCell
+  Cells, LinkCell, InputCell, SelectCell,
+  Toast
 } from 'vue-weui'
 import _ from 'underscore'
-// import AV from '../../js/AV'
-import {historyBack, exchange, toArray, disciplineCN, bestOfCN} from '../../js/utils'
+import AV from '../../js/AV'
+import {historyBack, isSingle, exchange, toArray, disciplineCN, bestOfCN} from '../../js/utils'
 import {getUserObj} from '../../js/methods'
 import {addOthersUserObj} from '../../vuex/actions/user'
-import {subTournamentRealtime} from '../../js/routeData'
+// import {subTournamentRealtime} from '../../js/routeData'
 import Clock from '../../js/Clock'
 // import {saveMatch} from '../../vuex/actions/match'
 import snapshot from '../../js/matchSnapshot'
@@ -65,10 +68,23 @@ export default {
     navbarView,
     versusView,
     Dialog,
-    Cells, LinkCell, InputCell, SelectCell
+    Cells, LinkCell, InputCell, SelectCell,
+    Toast
   },
   route: {
-    data: subTournamentRealtime
+    // data: subTournamentRealtime
+    data () {
+      return AV.Cloud.run('tournamentRealtime', {
+        method: 'getQueue',
+        tournamentObjId: this.$route.query.main,
+        subTournamentObjId: this.$route.query.sub,
+        queueKey: this.$route.query.key
+      }).then(ret => {
+        ret.teams = ret.teams.map(el => toArray(el))
+        this.queue = ret
+        this.addOthersUserObj(_.flatten(ret.teams))
+      })
+    }
   },
   vuex: {
     getters: {
@@ -90,8 +106,8 @@ export default {
       },
       matchClock: ({match}) => match.matchClock,
       scores: ({match}) => {
-        var s = _.clone(match.scores)
-        return match.sideExchanged ? {'0': s['1'], '1': s['0']} : s
+        // var s = _.clone(match.scores)
+        return match.sideExchanged ? {'0': match.scores['1'], '1': match.scores['0']} : match.scores
       },
       disciplineCN: ({match}) => {
         return disciplineCN(match.matchSettings.discipline)
@@ -101,7 +117,8 @@ export default {
       },
       bestOfCN: ({match}) => {
         return bestOfCN(match.matchSettings.bestOf)
-      }
+      },
+      matchCompleted: ({match}) => match.matchState === 'completed'
     },
     actions: {
       addOthersUserObj,
@@ -111,12 +128,12 @@ export default {
           tournamentObjId: this.$route.query.main,
           subTournamentObjId: this.$route.query.sub,
           key: this.key,
-          stage: this.queue[this.key].stage
+          stage: this.queue.stage
         })
       },
       addScore ({dispatch, state}, index) {
         var {match} = state
-        var {matchSettings} = this.queue[this.key]
+        var {matchSettings} = this.queue
         if (match.matchState !== 'playing') return
         if (match.isGameInterval) return
         if (match.sideExchanged) index = exchange(index)
@@ -154,23 +171,27 @@ export default {
         timer.cancel(timer.timer)
       },
       initDialogConfirm ({dispatch}) {
-        // var {query} = this.$route
-        // return AV.Cloud.run('tournamentRealtime', {
-        //   method: 'matchStart',
-        //   tournamentObjId: query.main,
-        //   subTournamentObjId: query.sub,
-        //   key: this.key
-        // }).then(ret => {
-        //   console.log(ret)
+        var {query} = this.$route
+        this.loadingToastShow = true
+        return AV.Cloud.run('tournamentRealtime', {
+          method: 'matchStart',
+          tournamentObjId: query.main,
+          subTournamentObjId: query.sub,
+          key: query.key
+        }).then(ret => {
+          console.log(ret)
+          this.leftTeamSelected === '0' || dispatch('EXCHANGE_SIDES')
+          this.initDialogShow = false
+          this.loadingToastShow = false
+        }).catch(() => {
+          this.loadingToastShow = false
+        })
+        // this.ref.child(`queue/${this.key}`).update({
+        //   state: 'ongoing'
+        // }, () => {
         //   this.leftTeamSelected === '0' || dispatch('EXCHANGE_SIDES')
         //   this.initDialogShow = false
         // })
-        this.ref.child(`queue/${this.key}`).update({
-          state: 'ongoing'
-        }, () => {
-          this.leftTeamSelected === '0' || dispatch('EXCHANGE_SIDES')
-          this.initDialogShow = false
-        })
       }
     }
   },
@@ -183,9 +204,11 @@ export default {
       isSingle: null,
       key: this.$route.query.key,
       initDialogShow: false,
+      loadingToastShow: false,
       leftTeamSelected: '',
       serviceTeamOptions: [],
-      serviceTeamSelected: ''
+      serviceTeamSelected: '',
+      revertingToastShow: false
     }
   },
   computed: {
@@ -206,16 +229,11 @@ export default {
           return [{nickname: '加载中'}]
         })
       }
-      var queue = this.queue[this.key]
-      var {stage, groupIndex, matchIndex} = queue.stage
-      if (this.isSingle) {
-        if (stage === 'groups') {
-          var match = this.groups[groupIndex].matches[matchIndex]
-          var t = match.teams.map(el => {
-            return this.getUserObj(el.objectId)
-          })
-          return this.sideExchanged ? t.reverse() : t
-        }
+      if (isSingle(this.queue.matchSettings.discipline)) {
+        var t = this.queue.teams.map(el => {
+          return el.map(el => this.getUserObj(el)[0])
+        })
+        return this.sideExchanged ? t.reverse() : t
       }
     }
   },
@@ -227,42 +245,72 @@ export default {
       if (match.matchState === 'preparing') return
       if (!match.scoresFlow.length && !match.matchGames.length) return
       if (!window.confirm('确定撤销上一分？')) return
-      snapshot.revert(this.$store.state.match)
-      // this.confirmDialogText = '确定撤销上一分？'
-      // this.confirmDialogState = 'undo'
-      // this.confirmDialogShow = true
+      this.revertingToastShow = true
+      return AV.Cloud.run('tournamentRealtime', {
+        method: 'revertSnapshot',
+        tournamentObjId: this.$route.query.main,
+        subTournamentObjId: this.$route.query.sub,
+        queueKey: this.$route.query.key,
+        matchCompleted: this.matchCompleted,
+        lastSnapshot: snapshot.get(2)
+      }).then(() => {
+        this.revertingToastShow = false
+        if (this.matchCompleted) {
+          return snapshot.undo(2)
+        }
+        return snapshot.undo(1)
+      })
     },
     matchComplete () {
       clock.cancel()
-      this.saveMatch().then(ret => {
-        console.log(ret)
-        this.setMatchResults({
-          maxConsecutivePoints: ret.maxConsecutivePoints,
-          maxMatchConsecutivePoints: ret.maxMatchConsecutivePoints,
-          scoringArr: ret.scoringArr
+      // this.saveMatch().then(ret => {
+      //   console.log(ret)
+      //   this.setMatchResults({
+      //     maxConsecutivePoints: ret.maxConsecutivePoints,
+      //     maxMatchConsecutivePoints: ret.maxMatchConsecutivePoints,
+      //     scoringArr: ret.scoringArr
+      //   })
+      //   this.matchCompletedDialogShow = true
+      // }).catch(err => console.log(err))
+      this.loadingToastShow = true
+      return AV.Cloud.run('tournamentRealtime', {
+        method: 'matchComplete',
+        tournamentObjId: this.$route.query.main,
+        subTournamentObjId: this.$route.query.sub,
+        queueKey: this.$route.query.key
+      }).then(() => {
+        this.loadingToastShow = false
+        this.$router.go({
+          name: 'umpireSubTournament',
+          query: {
+            main: this.$route.query.main,
+            sub: this.$route.query.sub
+          }
         })
-        this.matchCompletedDialogShow = true
-      }).catch(err => console.log(err))
+      })
     }
   },
   watch: {
     queue (val, oldVal) {
       if (!val) return
-      var thisQueue = val[this.key]
-      if (thisQueue.state === 'upcoming') {
-        console.log(1)
-        this.initDialogShow = true
-      }
       if (oldVal === null) {
         this.saveMatchIds()
-        this.saveMatchSettings(thisQueue.matchSettings)
+        this.saveMatchSettings(this.queue.matchSettings)
+        if (this.queue.state === 'upcoming') {
+          this.initDialogShow = true
+          snapshot.reset()
+          snapshot.save(this.$store.state)
+        } else if (this.queue.state === 'ongoing') {
+          // snapshot.recover(thisQueue.snapshot)
+          snapshot.recover(snapshot.get(1))
+        }
       }
     }
   },
   ready () {
     window.vm = this
-    snapshot.reset()
-    snapshot.save(this.$store.state)
+    window._ = _
+    // snapshot.reset()
   }
 }
 
