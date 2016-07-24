@@ -93,3 +93,9 @@ export const bestOfCN = function (bestOf) {
       return '五局三胜'
   }
 }
+
+export const getStageCN = function (stage) {
+  if (stage.stage === 'groups') {
+    return `第${stage.groupIndex + 1}组 第${stage.matchIndex + 1}场`
+  }
+}
