@@ -1,11 +1,11 @@
-import _ from 'underscore'
+import _ from 'lodash'
 
 export const toArray = function (obj) {
   return _.map(obj, x => x)
 }
 
 export const find = function (obj, objectId) {
-  return _.findWhere(obj, {objectId})
+  return _.find(obj, {objectId})
 }
 
 export const exchange = function (index) {

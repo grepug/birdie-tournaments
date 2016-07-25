@@ -1,4 +1,4 @@
-import _ from 'underscore'
+import _ from 'lodash'
 import AV from '../../js/AV'
 import {addOthersUserObj} from './user'
 import {isSingle, duplicate, beArray} from '../../js/utils'
@@ -9,7 +9,7 @@ export const addChairUmpiredTournaments = ({dispatch, state}) => {
     method: 'getMyChairUmpiredTournaments'
   }).then(ret => {
     dispatch('ADD_CHAIRUMPIRED_TOURNAMENTS', ret)
-    var userObjIds = _.flatten(ret.map(el => el.subTournaments.map(el => {
+    var userObjIds = _.flattenDeep(ret.map(el => el.subTournaments.map(el => {
       if (isSingle(el.discipline)) return el.signUpMembers.concat(el.umpires)
     }))).filter(x => x)
     return addOthersUserObj({dispatch, state}, userObjIds)

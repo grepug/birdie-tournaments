@@ -29,7 +29,7 @@ div
     SelectCell,
     Toast
   } from 'vue-weui'
-  import _ from 'underscore'
+  import _ from 'lodash'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
   import {addOthersUserObj} from '../../vuex/actions/user'
 
@@ -65,13 +65,13 @@ div
       subTournament () {
         if (!this.myChairUmpiredTournaments.length) return {}
         var {query} = this.$route
-        var r = _.findWhere(this.myChairUmpiredTournaments, {objectId: query.main})
-        return _.findWhere(r.subTournaments, {objectId: query.sub})
+        var r = _.find(this.myChairUmpiredTournaments, {objectId: query.main})
+        return _.find(r.subTournaments, {objectId: query.sub})
       },
       umpireOptions () {
         if (!this.myChairUmpiredTournaments.length) return []
         return [{text: '请选择', value: ''}].concat(this.subTournament.umpires.map(el => {
-          var r = _.findWhere(this.otherUserObjs, {objectId: el}) || this.userObj
+          var r = _.find(this.otherUserObjs, {objectId: el}) || this.userObj
           return {
             text: r.nickname,
             value: el

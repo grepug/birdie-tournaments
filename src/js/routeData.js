@@ -1,5 +1,5 @@
 import Wilddog from '../../node_modules/wilddog/lib/wilddog-node'
-import _ from 'underscore'
+import _ from 'lodash'
 import {isSingle} from './utils'
 
 export const subTournamentRealtime = function () {
@@ -13,7 +13,7 @@ export const subTournamentRealtime = function () {
       switch (key) {
         case 'groups':
           this.groups = val
-          this.addOthersUserObj(_.flatten(val.map(el => {
+          this.addOthersUserObj(_.flattenDeep(val.map(el => {
             return el.teams.map(el => el.objectId)
           })))
           break

@@ -1,4 +1,4 @@
-// import _ from 'underscore'
+// import _ from 'lodash'
 import snapshot from '../../js/matchSnapshot'
 import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
 import wilddogConfig from '../../config/wilddogConfig'

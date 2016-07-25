@@ -51,7 +51,7 @@ import {
   Cells, LinkCell, InputCell, SelectCell,
   Toast
 } from 'vue-weui'
-import _ from 'underscore'
+import _ from 'lodash'
 import AV from '../../js/AV'
 import {historyBack, isSingle, exchange, toArray, disciplineCN, bestOfCN} from '../../js/utils'
 import {getUserObj} from '../../js/methods'
@@ -83,7 +83,7 @@ export default {
       }).then(ret => {
         // ret.stage.teams = ret.stage.teams.map(el => toArray(el))
         this.queue = ret
-        return this.addOthersUserObj(_.flatten(ret.stage.teams))
+        return this.addOthersUserObj(_.flattenDeep(ret.stage.teams))
       })
     }
   },

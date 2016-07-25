@@ -1,4 +1,4 @@
-import _ from 'underscore'
+import _ from 'lodash'
 
 const state = {
   isUserLoged: false,
@@ -15,7 +15,7 @@ const mutations = {
   },
   ADD_OTHER_USEROBJS (state, userObjs) {
     userObjs.forEach(userObj => {
-      var r = _.findWhere(state.userObjs, {objectId: userObj.objectId})
+      var r = _.find(state.userObjs, {objectId: userObj.objectId})
       if (!r) state.userObjs.push(userObj)
     })
   }

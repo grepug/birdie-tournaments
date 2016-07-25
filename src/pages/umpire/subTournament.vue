@@ -38,7 +38,7 @@ div
     Cells, LinkCell, CellsTitle,
     Toast
   } from 'vue-weui'
-  import _ from 'underscore'
+  import _ from 'lodash'
   import AV from '../../js/AV'
   import {historyBack, getStageCN, isSingle} from '../../js/utils'
   import {addOthersUserObj} from '../../vuex/actions/user'
@@ -61,7 +61,7 @@ div
           this.courts = ret.courts
           this.groups = ret.groups
           if (isSingle(ret.discipline)) {
-            return this.addOthersUserObj(_.flatten(_.map(ret.queue, (val) => {
+            return this.addOthersUserObj(_.flattenDeep(_.map(ret.queue, (val) => {
               if (ret.courts[val.courtIndex].umpire === this.userObj.objectId) {
                 return val.stage.teams.map(el => el)
               }

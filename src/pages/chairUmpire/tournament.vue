@@ -44,7 +44,7 @@ div
     Toast
   } from 'vue-weui'
   import AV from '../../js/AV'
-  import _ from 'underscore'
+  import _ from 'lodash'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
   import nicetime from '@grepug/nicetime'
 
@@ -78,11 +78,11 @@ div
     computed: {
       thisTournament () {
         if (!this.myChairUmpiredTournaments.length) return []
-        return _.findWhere(this.myChairUmpiredTournaments, {objectId: this.$route.query.main})
+        return _.find(this.myChairUmpiredTournaments, {objectId: this.$route.query.main})
       },
       subTournaments () {
         if (!this.myChairUmpiredTournaments.length) return []
-        return _.findWhere(this.myChairUmpiredTournaments, {objectId: this.$route.query.main}).subTournaments
+        return _.find(this.myChairUmpiredTournaments, {objectId: this.$route.query.main}).subTournaments
       }
     },
     methods: {

@@ -5,9 +5,10 @@ div
       a.link(href="javascript:;", @click="back") 返回
     .center 报名列表
     .right
-      a.link(href="javascript:;", @click="openSortable", v-if="sortableState === 'closed'") 排阵
+      a.link(href="javascript:;", @click="actionsheetShow = true", v-if="sortableState === 'closed'") 排阵
       a.link(href="javascript:;", @click="save", v-if="sortableState === 'sorting'") 保存
   toast(type="loading", v-show="true", v-if="$loadingRouteData") 加载中...
+  actionsheet(:show.sync="actionsheetShow", :menus="actionsheetMenus", :actions="actionsheetActions", @weui-menu-click="handleMenuClick")
   main(v-if="!$loadingRouteData")
     template(v-if="subTournament.state === 'signingUp'")
       cells-title {{subTournament.name}}报名列表
@@ -29,9 +30,10 @@ div
     Cells,
     LinkCell,
     CellsTitle,
-    Toast
+    Toast,
+    Actionsheet
   } from 'vue-weui'
-  import _ from 'underscore'
+  import _ from 'lodash'
   import AV from '../../js/AV'
   import {isSingle, groupArr} from '../../js/utils'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
@@ -44,7 +46,8 @@ div
       Cells,
       LinkCell,
       CellsTitle,
-      Toast
+      Toast,
+      Actionsheet
     },
     vuex: {
       getters: {
@@ -67,15 +70,23 @@ div
         sortableState: 'closed',
         groups: _.range(4),
         groupsList: [],
-        playoffsList: []
+        playoffsList: [],
+        actionsheetShow: false,
+        actionsheetMenus: {
+          orderByGroups4: '4人一组排阵',
+          orderAsElimination: '按淘汰赛排阵'
+        },
+        actionsheetActions: {
+
+        }
       }
     },
     computed: {
       subTournament () {
         if (!this.myChairUmpiredTournaments.length) return {}
         var {query} = this.$route
-        var r = _.findWhere(this.myChairUmpiredTournaments, {objectId: query.main})
-        return _.findWhere(r.subTournaments, {objectId: query.sub})
+        var r = _.find(this.myChairUmpiredTournaments, {objectId: query.main})
+        return _.find(r.subTournaments, {objectId: query.sub})
       },
       signUpMembers () {
         var signUpMembers = this.subTournament.signUpMembers
@@ -83,11 +94,11 @@ div
         if (isSingle(this.subTournament.discipline)) {
           return signUpMembers.map(el => {
             if (el === this.userObj.objectId) return this.userObj
-            return _.findWhere(this.otherUserObjs, {objectId: el})
+            return _.find(this.otherUserObjs, {objectId: el})
           })
         }
         return signUpMembers.map(el => {
-          return _.findWhere(this.doubles, {objectId: el})
+          return _.find(this.doubles, {objectId: el})
         })
       },
       signUpMembersGrouped () {
@@ -97,6 +108,14 @@ div
     methods: {
       back () {
         window.history.back()
+      },
+      handleMenuClick (key) {
+        switch (key) {
+          case 'orderByGroups4':
+            var arr = _.chunk(this.signUpMembers, 4)
+            console.log(arr)
+            break
+        }
       },
       isSingle,
       openSortable () {

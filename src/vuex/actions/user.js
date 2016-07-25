@@ -1,10 +1,10 @@
-import _ from 'underscore'
+import _ from 'lodash'
 import AV from '../../js/AV'
 import {beArray} from '../../js/utils'
 
 export const addOthersUserObj = function ({dispatch, state}, userObjIds) {
   var unstoredObjs = beArray(userObjIds).map(id => {
-    var r = _.findWhere(state.user.userObjs, {objectId: id})
+    var r = _.find(state.user.userObjs, {objectId: id})
     if (!r && id !== state.user.userObj.objectId) return id
   }).filter(x => x)
   if (!unstoredObjs.length) return

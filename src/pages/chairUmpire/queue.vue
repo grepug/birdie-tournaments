@@ -71,7 +71,7 @@ import {
   SwitchCell,
   Panel, PanelHeader, PanelBody, MediaBox, MediaBody, MediaTitle, MediaDescription
 } from 'vue-weui'
-import _ from 'underscore'
+import _ from 'lodash'
 import AV from '../../js/AV'
 import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
 import {isSingle} from '../../js/utils'
@@ -101,7 +101,7 @@ export default {
           switch (key) {
             case 'groups':
               this.groups = val
-              this.addOthersUserObj(_.flatten(val.map(el => {
+              this.addOthersUserObj(_.flattenDeep(val.map(el => {
                 return el.teams.map(el => el.objectId)
               })))
               break
@@ -153,11 +153,11 @@ export default {
   },
   computed: {
     preparingMatchesOptions () {
-      var preparingMatches = _.flatten(this.groups.map((el, groupIndex) => {
+      var preparingMatches = _.flattenDeep(this.groups.map((el, groupIndex) => {
         return el.matches.map((el, matchIndex) => {
           if (el.state === 'preparing') {
             var text = el.teams.map(el => {
-              return (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+              return (_.find(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
             }).join(' vs ')
             return {
               text,
@@ -186,11 +186,11 @@ export default {
         var {stage, courtIndex, matchSettings, state} = val
         if (stage.stage === 'groups') {
           var match = this.groups[stage.groupIndex].matches[stage.matchIndex]
-          var umpire = (_.findWhere(this.otherUserObjs, {objectId: this.courts[courtIndex].umpire}) || this.userObj).nickname
+          var umpire = (_.find(this.otherUserObjs, {objectId: this.courts[courtIndex].umpire}) || this.userObj).nickname
           var vs
           if (this.isSingle) { // 单打
             vs = match.teams.map(el => {
-              return (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+              return (_.find(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
             }).join(' vs ')
           } else { // 双打
             // to do

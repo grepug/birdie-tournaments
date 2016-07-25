@@ -36,7 +36,7 @@ div
 </template>
 
 <script>
-  import _ from 'underscore'
+  import _ from 'lodash'
   import {
     navbarView
   } from '../../components'
@@ -73,8 +73,8 @@ div
       subTournament () {
         if (!this.myChairUmpiredTournaments.length) return []
         var {query} = this.$route
-        var r = _.findWhere(this.myChairUmpiredTournaments, {objectId: query.main})
-        return _.findWhere(r.subTournaments, {objectId: query.sub})
+        var r = _.find(this.myChairUmpiredTournaments, {objectId: query.main})
+        return _.find(r.subTournaments, {objectId: query.sub})
       }
     },
     methods: {

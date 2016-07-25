@@ -1,4 +1,4 @@
-import _ from 'underscore'
+import _ from 'lodash'
 import store from '../vuex/store'
 // import {arr2Obj} from './utils'
 // import wilddogConfig from '../config/wilddogConfig'

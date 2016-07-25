@@ -25,7 +25,7 @@ div
   import {
     Cells, LinkCell, CellsTitle
   } from 'vue-weui'
-  import _ from 'underscore'
+  import _ from 'lodash'
   import {isSingle} from '../../js/utils'
   import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
   import {addOthersUserObj} from '../../vuex/actions/user'
@@ -49,7 +49,7 @@ div
             switch (key) {
               case 'groups':
                 this.groups = val
-                this.addOthersUserObj(_.flatten(val.map(el => {
+                this.addOthersUserObj(_.flattenDeep(val.map(el => {
                   return el.teams.map(el => el.objectId)
                 })))
                 break
@@ -86,14 +86,14 @@ div
           return {
             teams: el.teams.map(el => {
               return {
-                nickname: (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname,
+                nickname: (_.find(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname,
                 objectId: el.objectId,
                 scores: el.scores
               }
             }),
             matches: el.matches.map(el => {
               el.nicknames = el.teams.map(el => {
-                return (_.findWhere(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+                return (_.find(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
               })
               return el
             })

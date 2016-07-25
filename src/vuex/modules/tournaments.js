@@ -1,4 +1,4 @@
-import _ from 'underscore'
+import _ from 'lodash'
 import {beArray} from '../../js/utils'
 
 const state = {
@@ -11,13 +11,13 @@ const state = {
 const mutations = {
   ADD_CHAIRUMPIRED_TOURNAMENTS (state, objs) {
     beArray(objs).forEach(el => {
-      var r = _.findWhere(state.chairUmpiredTournaments, {objectId: el.objectId})
+      var r = _.find(state.chairUmpiredTournaments, {objectId: el.objectId})
       if (!r) state.chairUmpiredTournaments.push(el)
     })
   },
   ADD_TOURNAMENTS (state, tournamentObjs) {
     beArray(tournamentObjs).forEach(el => {
-      var r = _.findWhere(state.tournaments, {objectId: el.objectId})
+      var r = _.find(state.tournaments, {objectId: el.objectId})
       if (!r) state.tournaments.push(el)
     })
   },
