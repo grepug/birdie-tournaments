@@ -33,6 +33,7 @@ export default {
   },
 
   recover (snapshot) {
+    console.log(snapshot)
     store.dispatch('MATCH_RECOVER', snapshot)
   },
 
@@ -58,7 +59,7 @@ export default {
     var item = window.localStorage.getItem(KEY)
     item = item && JSON.parse(item)
     if (last) {
-      return _.last(item, last)[0]
+      return _.last(item, last)
     }
     return item
   }

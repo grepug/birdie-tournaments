@@ -18,9 +18,11 @@ div
           span(slot="header") 得分制
         select-cell(:after="true", :options="bestOfOptions", :selected.sync="bestOfSelected")
           span(slot="header") 局数
-        switch-cell(name="switch", label="是否场地固定裁判", :on.sync="ifOneUmpire")
-        select-cell(:after="true", :options="courtsOptions", :selected.sync="courtSelected", v-if="!ifOneUmpire")
-          span(slot="header") 裁判
+        //- select-cell(:after="true", )
+        //-   span(slot="header") 间歇分
+        //- switch-cell(name="switch", label="是否场地固定裁判", :on.sync="ifOneUmpire")
+        //- select-cell(:after="true", :options="courtsOptions", :selected.sync="courtSelected", v-if="!ifOneUmpire")
+        //-   span(slot="header") 裁判
     dialog(v-show="editDialogShow", type="confirm", title="队列变更", confirm-button="确认", cancel-button="取消", @weui-dialog-confirm="editDialogConfirm", @weui-dialog-cancel="dialogCancel")
       cells(type="split")
         link-cell
@@ -32,28 +34,28 @@ div
           span(slot="header") 得分制
         select-cell(:after="true", :options="bestOfOptions", :selected.sync="bestOfSelected")
           span(slot="header") 局数
-        switch-cell(name="switch", label="是否场地固定裁判", :on.sync="ifOneUmpire")
-        select-cell(:after="true", :options="courtsOptions", :selected.sync="courtSelected", v-if="!ifOneUmpire")
-          span(slot="header") 裁判
+        //- switch-cell(name="switch", label="是否场地固定裁判", :on.sync="ifOneUmpire")
+        //- select-cell(:after="true", :options="courtsOptions", :selected.sync="courtSelected", v-if="!ifOneUmpire")
+        //-   span(slot="header") 裁判
     panel(access="")
       panel-header 即将进行
       panel-body(v-for="(index, el) in thisQueue", @click="edit(index)", v-if="el.state === 'upcoming'")
         media-box(type="text")
           media-body
             media-title {{el.vs}}
-            media-description 小组赛 {{el.stage}} | 场地：{{el.court}} | 裁判：{{el.umpire}}
+            media-description {{el.stage}} | 场地：{{el.court}} | 裁判：{{el.umpire}}
       panel-header 正在进行
       panel-body(v-for="(index, el) in thisQueue", @click="edit(index)", v-if="el.state === 'ongoing'")
         media-box(type="text")
           media-body
             media-title {{el.vs}}
-            media-description 小组赛 {{el.stage}} | 场地：{{el.court}} | 裁判：{{el.umpire}}
+            media-description {{el.stage}} | 场地：{{el.court}} | 裁判：{{el.umpire}}
       panel-header 已结束
       panel-body(v-for="(index, el) in thisQueue", @click="edit(index)", v-if="el.state === 'completed'")
         media-box(type="text")
           media-body
             media-title {{el.vs}}
-            media-description 小组赛 {{el.stage}} | 场地：{{el.court}} | 裁判：{{el.umpire}}
+            media-description {{el.stage}} | 场地：{{el.court}} | 裁判：{{el.umpire}}
 
 </template>
 
@@ -76,6 +78,7 @@ import AV from '../../js/AV'
 import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
 import {isSingle} from '../../js/utils'
 import {addOthersUserObj} from '../../vuex/actions/user'
+import {getUserObj} from '../../js/methods'
 
 export default {
   components: {
@@ -116,6 +119,7 @@ export default {
               this.addOthersUserObj(val.map(el => el.umpire))
               break
             case 'discipline':
+              this.discipline = val
               this.isSingle = isSingle(val)
               break
           }
@@ -135,12 +139,14 @@ export default {
   data () {
     return {
       isSingle: null,
+      discipline: null,
       preparingMatches: [],
       dialogShow: false,
       editDialogShow: false,
       teamsInEditing: '',
       selected: '',
       queue: {},
+      playoffs: [],
       groups: [],
       courts: [],
       courtSelected: '',
@@ -158,7 +164,7 @@ export default {
           if (el.state === 'preparing') {
             var text = el.teams.map(el => {
               return (_.find(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
-            }).join(' vs ')
+            }).join(' vs ') + ` 组${groupIndex + 1}场${matchIndex + 1}`
             return {
               text,
               value: JSON.stringify({
@@ -171,7 +177,29 @@ export default {
           }
         }).filter(x => x)
       }).filter(x => x))
-      return [{text: '请选择', value: ''}].concat(preparingMatches)
+      var playoffs = _.flattenDeep(this.playoffs.map((el, roundIndex) => {
+        var round = el.round
+        return el.matches.map((el, matchIndex) => {
+          if (el.state === 'preparing') {
+            var text = el.teams.map(el => {
+              return this.getUserObj(el.objectId)[0].nickname
+            }).join(' vs ') + ` 淘汰赛${round}强`
+            console.log(text)
+            return {
+              text,
+              value: JSON.stringify({
+                stage: 'playoffs',
+                round,
+                roundIndex,
+                matchIndex,
+                teams: el.teams.map(el => el.objectId)
+              })
+            }
+          }
+        })
+      })).filter(x => x)
+      console.log(playoffs)
+      return [{text: '请选择', value: ''}].concat(preparingMatches).concat(playoffs)
     },
     courtsOptions () {
       return [{text: '请选择', value: ''}].concat(this.courts.map((el, courtIndex) => {
@@ -184,27 +212,26 @@ export default {
     thisQueue () {
       return _.map(this.queue, (val, key) => {
         var {stage, courtIndex, matchSettings, state} = val
-        if (stage.stage === 'groups') {
-          var match = this.groups[stage.groupIndex].matches[stage.matchIndex]
-          var umpire = (_.find(this.otherUserObjs, {objectId: this.courts[courtIndex].umpire}) || this.userObj).nickname
-          var vs
-          if (this.isSingle) { // 单打
-            vs = match.teams.map(el => {
-              return (_.find(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
-            }).join(' vs ')
-          } else { // 双打
-            // to do
-          }
-          return {
-            vs,
-            stage: `第${stage.groupIndex + 1}组 第${stage.matchIndex + 1}场`,
-            court: this.courts[courtIndex].name,
-            state,
-            courtIndex,
-            matchSettings,
-            umpire,
-            key
-          }
+        var match = stage.stage === 'groups' ? this.groups[stage.groupIndex].matches[stage.matchIndex] : this.playoffs[stage.roundIndex].matches[stage.matchIndex]
+        var umpire = this.getUserObj(this.courts[courtIndex].umpire)[0].nickname
+        var vs
+        var _stage = stage.stage === 'groups' ? `第${stage.groupIndex + 1}组 第${stage.matchIndex + 1}场` : `${stage.round}强`
+        if (this.isSingle) { // 单打
+          vs = match.teams.map(el => {
+            return this.getUserObj(el.objectId)[0].nickname
+          }).join(' vs ')
+        } else { // 双打
+          // to do
+        }
+        return {
+          vs,
+          stage: _stage,
+          court: this.courts[courtIndex].name,
+          state,
+          courtIndex,
+          matchSettings,
+          umpire,
+          key
         }
       })
     }
@@ -233,7 +260,8 @@ export default {
         courtIndex: this.courtSelected,
         matchSettings: {
           scoringSys: this.scoringSysSelected,
-          bestOf: this.bestOfSelected
+          bestOf: this.bestOfSelected,
+          discipline: this.discipline
         }
       }).then(ret => {
         console.log(ret)
@@ -260,7 +288,8 @@ export default {
     dialogCancel () {
       this.dialogShow = false
       this.editDialogShow = false
-    }
+    },
+    getUserObj
   },
   ready () {
     window.vm = this

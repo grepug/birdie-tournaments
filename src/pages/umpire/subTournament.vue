@@ -16,17 +16,17 @@ div
     cells(type="access")
       link-cell(v-for="(index, el) in myQueue", @click="go(index)", v-if="el.state === 'ongoing'")
         span(slot="header") {{el.vs}}
-        span(slot="footer") 小组赛 {{el.stage}}
+        span(slot="footer") {{el.stage}}
     cells-title 即将进行
     cells(type="access")
       link-cell(v-for="(index, el) in myQueue", @click="go(index)", v-if="el.state === 'upcoming'")
         span(slot="header") {{el.vs}}
-        span(slot="footer") 小组赛 {{el.stage}}
+        span(slot="footer") {{el.stage}}
     cells-title 已结束
     cells(type="access")
       link-cell(v-for="(index, el) in myQueue", v-if="el.state === 'completed'")
         span(slot="header") {{el.vs}}
-        span(slot="footer") 小组赛 {{el.stage}}
+        span(slot="footer") {{el.stage}}
 
 </template>
 

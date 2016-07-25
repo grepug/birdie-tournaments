@@ -284,8 +284,11 @@ export default {
         method: 'matchComplete',
         tournamentObjId: this.$route.query.main,
         subTournamentObjId: this.$route.query.sub,
-        queueKey: this.$route.query.key
-      }).then(() => {
+        queueKey: this.$route.query.key,
+        lastSnapshot: snapshot.get(1),
+        stage: this.queue.stage
+      }).then(ret => {
+        console.log(ret)
         this.loadingToastShow = false
         this.$router.go({
           name: 'umpireSubTournament',
@@ -294,7 +297,7 @@ export default {
             sub: this.$route.query.sub
           }
         })
-      })
+      }).catch(err => console.log(err))
     }
   },
   watch: {

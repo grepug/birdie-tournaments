@@ -84,7 +84,7 @@ export const disciplineCN = function (discipline) {
 }
 
 export const bestOfCN = function (bestOf) {
-  switch (bestOf) {
+  switch (parseInt(bestOf)) {
     case 1:
       return '一局一胜'
     case 3:
@@ -96,6 +96,9 @@ export const bestOfCN = function (bestOf) {
 
 export const getStageCN = function (stage) {
   if (stage.stage === 'groups') {
-    return `第${stage.groupIndex + 1}组 第${stage.matchIndex + 1}场`
+    return `小组赛 第${stage.groupIndex + 1}组 第${stage.matchIndex + 1}场`
+  }
+  if (stage.stage === 'playoffs') {
+    return `淘汰赛 ${stage.round}强 第${stage.matchIndex}场`
   }
 }
