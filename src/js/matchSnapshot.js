@@ -8,11 +8,13 @@ const KEY = 'match_snapshot'
 
 export default {
 
-  undo (range) {
+  undo () {
     var item
     var len
     var str
     var last
+    var {match} = store.state
+    var range = (match.matchCompleted || !match.scoresFlow.length) ? 2 : 1
 
     item = window.localStorage.getItem(KEY)
     item = item && JSON.parse(item)
@@ -42,6 +44,7 @@ export default {
     item = item && JSON.parse(item)
     item = item || []
     item.push(match)
+    console.log(match)
     str = JSON.stringify(item)
     window.localStorage.setItem(KEY, str)
     store.dispatch('SET_CLOCK', Date.now())

@@ -6,8 +6,9 @@ div
     .center 比赛中
     .right
       a.link(href="javascript:;") 更多
-  main
-    versus-view(:teams="teams", :points="scores", @on-add-point="addScore")
+  toast(type="loading", v-show="$loadingRouteData") 加载中...
+  main(v-if="!$loadingRouteData")
+    versus-view(:teams="teams", :points="scores", :scored-team="lastScoredTeamIndex", :side-exchanged="sideExchanged", @on-add-point="addScore")
     dialog(type="alert", v-show="initDialogShow", title="赛前选边", @weui-dialog-confirm="initDialogConfirm")
       cells(type="split")
         select-cell(:after="true", :options="leftTeamOptions", :selected.sync="leftTeamSelected")
@@ -80,9 +81,9 @@ export default {
         subTournamentObjId: this.$route.query.sub,
         queueKey: this.$route.query.key
       }).then(ret => {
-        ret.teams = ret.teams.map(el => toArray(el))
+        // ret.stage.teams = ret.stage.teams.map(el => toArray(el))
         this.queue = ret
-        this.addOthersUserObj(_.flatten(ret.teams))
+        return this.addOthersUserObj(_.flatten(ret.stage.teams))
       })
     }
   },
@@ -92,6 +93,7 @@ export default {
       otherUserObjs: ({user}) => user.userObjs,
       sideExchanged: ({match}) => match.sideExchanged,
       isGameInterval: ({match}) => match.isGameInterval,
+      lastScoredTeamIndex: ({match}) => match.lastScoredTeamIndex,
       gameIntervalTimer: ({match}) => {
         var {matchSettings} = match
         var timeout = match.gameIntervalTimer
@@ -105,6 +107,7 @@ export default {
         return ret
       },
       matchClock: ({match}) => match.matchClock,
+      matchDuration: ({match}) => match.matchDuration,
       scores: ({match}) => {
         // var s = _.clone(match.scores)
         return match.sideExchanged ? {'0': match.scores['1'], '1': match.scores['0']} : match.scores
@@ -118,10 +121,12 @@ export default {
       bestOfCN: ({match}) => {
         return bestOfCN(match.matchSettings.bestOf)
       },
-      matchCompleted: ({match}) => match.matchState === 'completed'
+      matchCompleted: ({match}) => match.matchState === 'completed',
+      scoresFlowLen: ({match}) => match.scoresFlow.length
     },
     actions: {
       addOthersUserObj,
+      clockTicking: ({dispatch}, cl, dur) => dispatch('CHANGE_MATCH_DURATION', cl, dur),
       saveMatchSettings: ({dispatch}, obj) => dispatch('SET_MATCH_SETTINGS', obj),
       saveMatchIds ({dispatch}) {
         dispatch('SAVE_MATCH_IDS', {
@@ -183,6 +188,9 @@ export default {
           this.leftTeamSelected === '0' || dispatch('EXCHANGE_SIDES')
           this.initDialogShow = false
           this.loadingToastShow = false
+          clock.initClock(null, (cl) => {
+            this.clockTicking(cl, clock.duration)
+          })
         }).catch(() => {
           this.loadingToastShow = false
         })
@@ -230,9 +238,11 @@ export default {
         })
       }
       if (isSingle(this.queue.matchSettings.discipline)) {
-        var t = this.queue.teams.map(el => {
-          return el.map(el => this.getUserObj(el)[0])
+        console.log(this.queue.stage.teams)
+        var t = this.queue.stage.teams.map(el => {
+          return this.getUserObj(el)
         })
+        console.log(t)
         return this.sideExchanged ? t.reverse() : t
       }
     }
@@ -252,13 +262,10 @@ export default {
         subTournamentObjId: this.$route.query.sub,
         queueKey: this.$route.query.key,
         matchCompleted: this.matchCompleted,
-        lastSnapshot: snapshot.get(2)
+        lastSnapshot: snapshot.get(this.scoresFlowLen ? 2 : 3)
       }).then(() => {
         this.revertingToastShow = false
-        if (this.matchCompleted) {
-          return snapshot.undo(2)
-        }
-        return snapshot.undo(1)
+        return snapshot.undo()
       })
     },
     matchComplete () {
@@ -301,8 +308,10 @@ export default {
           snapshot.reset()
           snapshot.save(this.$store.state)
         } else if (this.queue.state === 'ongoing') {
-          // snapshot.recover(thisQueue.snapshot)
           snapshot.recover(snapshot.get(1))
+          clock.initClock(this.matchDuration, cl => {
+            this.clockTicking(cl, clock.duration)
+          })
         }
       }
     }
@@ -310,7 +319,6 @@ export default {
   ready () {
     window.vm = this
     window._ = _
-    // snapshot.reset()
   }
 }
 

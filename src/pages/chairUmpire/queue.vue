@@ -37,16 +37,23 @@ div
           span(slot="header") 裁判
     panel(access="")
       panel-header 即将进行
-      panel-body(v-for="(index, el) in thisQueue", @click="edit(index)")
+      panel-body(v-for="(index, el) in thisQueue", @click="edit(index)", v-if="el.state === 'upcoming'")
         media-box(type="text")
           media-body
             media-title {{el.vs}}
             media-description 小组赛 {{el.stage}} | 场地：{{el.court}} | 裁判：{{el.umpire}}
-    //- cells(type="access")
-    //-   link-cell(v-for="el in thisQueue")
-    //-     span(slot="header") {{el.vs}}
-    //-     span(slot="footer") {{el.stage}} {{el.court}} 裁判:邵锴
-    //- cells-title 进行中
+      panel-header 正在进行
+      panel-body(v-for="(index, el) in thisQueue", @click="edit(index)", v-if="el.state === 'ongoing'")
+        media-box(type="text")
+          media-body
+            media-title {{el.vs}}
+            media-description 小组赛 {{el.stage}} | 场地：{{el.court}} | 裁判：{{el.umpire}}
+      panel-header 已结束
+      panel-body(v-for="(index, el) in thisQueue", @click="edit(index)", v-if="el.state === 'completed'")
+        media-box(type="text")
+          media-body
+            media-title {{el.vs}}
+            media-description 小组赛 {{el.stage}} | 场地：{{el.court}} | 裁判：{{el.umpire}}
 
 </template>
 
@@ -157,7 +164,8 @@ export default {
               value: JSON.stringify({
                 stage: 'groups',
                 groupIndex,
-                matchIndex
+                matchIndex,
+                teams: el.teams.map(el => el.objectId)
               })
             }
           }
@@ -175,7 +183,7 @@ export default {
     },
     thisQueue () {
       return _.map(this.queue, (val, key) => {
-        var {stage, courtIndex, matchSettings} = val
+        var {stage, courtIndex, matchSettings, state} = val
         if (stage.stage === 'groups') {
           var match = this.groups[stage.groupIndex].matches[stage.matchIndex]
           var umpire = (_.findWhere(this.otherUserObjs, {objectId: this.courts[courtIndex].umpire}) || this.userObj).nickname
@@ -191,6 +199,7 @@ export default {
             vs,
             stage: `第${stage.groupIndex + 1}组 第${stage.matchIndex + 1}场`,
             court: this.courts[courtIndex].name,
+            state,
             courtIndex,
             matchSettings,
             umpire,

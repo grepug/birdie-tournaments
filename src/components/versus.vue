@@ -25,10 +25,14 @@
     props: {
       teams: {
         type: Array,
-        default: []
+        default () {
+          return []
+        }
       },
       points: {
-        default: []
+        default () {
+          return []
+        }
       },
       scoredTeam: {
         type: Number
@@ -55,6 +59,7 @@
       },
       buttonActive () {
         var index = this.scoredTeam
+        console.log(this.sideExchanged)
         if (this.sideExchanged) index = index === 0 ? 1 : 0
         return index
       }

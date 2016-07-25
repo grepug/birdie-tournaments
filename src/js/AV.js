@@ -10,7 +10,7 @@ AV.initialize(config.appid, config.appsecret)
 
 window.AV = AV
 
-AV.serverURL = 'http://localhost:3000'
+// AV.serverURL = 'http://localhost:3000'
 // AV.serverURL = 'http://grepug.vip.natapp.cn'
 
 export default AV

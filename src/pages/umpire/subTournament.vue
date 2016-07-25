@@ -14,19 +14,19 @@ div
         span(slot="footer") {{myCourt}}
     cells-title 正在进行
     cells(type="access")
-      link-cell(v-for="el in ongoings")
-        span(slot="header") {{el}}
-        span(slot="footer")
+      link-cell(v-for="(index, el) in myQueue", @click="go(index)", v-if="el.state === 'ongoing'")
+        span(slot="header") {{el.vs}}
+        span(slot="footer") 小组赛 {{el.stage}}
     cells-title 即将进行
     cells(type="access")
-      link-cell(v-for="(index, el) in myQueue", @click="go(index)")
+      link-cell(v-for="(index, el) in myQueue", @click="go(index)", v-if="el.state === 'upcoming'")
         span(slot="header") {{el.vs}}
-        span(slot="footer")
+        span(slot="footer") 小组赛 {{el.stage}}
     cells-title 已结束
-    cells
-      link-cell(v-for="(index, el) in completed")
+    cells(type="access")
+      link-cell(v-for="(index, el) in myQueue", v-if="el.state === 'completed'")
         span(slot="header") {{el.vs}}
-        span(slot="footer")
+        span(slot="footer") 小组赛 {{el.stage}}
 
 </template>
 
@@ -40,7 +40,7 @@ div
   } from 'vue-weui'
   import _ from 'underscore'
   import AV from '../../js/AV'
-  import {historyBack, getStageCN, toArray} from '../../js/utils'
+  import {historyBack, getStageCN, isSingle} from '../../js/utils'
   import {addOthersUserObj} from '../../vuex/actions/user'
   import {getUserObj} from '../../js/methods'
 
@@ -60,11 +60,14 @@ div
           this.queue = ret.queue
           this.courts = ret.courts
           this.groups = ret.groups
-          return this.addOthersUserObj(_.flatten(_.map(ret.queue, (val) => {
-            if (ret.courts[val.courtIndex].umpire === this.userObj.objectId) {
-              return val.teams.map(el => toArray(el))
-            }
-          })))
+          if (isSingle(ret.discipline)) {
+            return this.addOthersUserObj(_.flatten(_.map(ret.queue, (val) => {
+              if (ret.courts[val.courtIndex].umpire === this.userObj.objectId) {
+                return val.stage.teams.map(el => el)
+              }
+            })))
+          }
+          return // doubles
         })
       }
     },
@@ -88,48 +91,18 @@ div
     computed: {
       myQueue () {
         return _.map(this.queue, (val, key) => {
-          var {stage, courtIndex, matchSettings} = val
+          var {stage, courtIndex, matchSettings, state} = val
           if (this.courts[val.courtIndex].umpire !== this.userObj.objectId) return
-          if (val.state !== 'upcoming') return
           return {
-            vs: val.teams.map(el => {
-              return el.map(el => this.getUserObj(el)[0].nickname)
+            vs: val.stage.teams.map(el => {
+              return this.getUserObj(el)[0].nickname
             }).join(' vs '),
             stage: getStageCN(stage),
             court: this.courts[courtIndex].name,
             courtIndex,
             matchSettings,
-            key
-          }
-        }).filter(x => x)
-      },
-      ongoings () {
-        return _.map(this.queue, (val, key) => {
-          if (val.state !== 'ongoing') return
-          var {stage} = val
-          var match = this.groups[stage.groupIndex].matches[stage.matchIndex]
-          if (this.isSingle) {
-            return match.teams.map(el => {
-              return this.getUserObj(el.objectId)[0].nickname
-            }).join(' vs ')
-          }
-        }).filter(x => x)
-      },
-      completed () {
-        return _.map(this.queue, (val, key) => {
-          var {stage, courtIndex, matchSettings} = val
-          if (this.courts[val.courtIndex].umpire !== this.userObj.objectId) return
-          if (val.state !== 'completed') return
-          return {
-            vs: val.teams.map(el => {
-              // return el.map(el => this.getUserObj(el)[0].nickname)
-              return _.map(el, (el) => this.getUserObj(el)[0].nickname)
-            }).join(' vs '),
-            stage: getStageCN(stage),
-            court: this.courts[courtIndex].name,
-            courtIndex,
-            matchSettings,
-            key
+            key,
+            state
           }
         }).filter(x => x)
       },
@@ -146,6 +119,11 @@ div
       getUserObj,
       refresh: () => window.location.reload(),
       go (index) {
+        if (this.myQueue.filter(x => {
+          return x.state === 'ongoing'
+        }).length && this.myQueue[index].state !== 'ongoing') {
+          return window.alert('请先完成正在进行中的比赛')
+        }
         this.$router.go({
           name: 'umpireScoringPage',
           query: _.extend(this.$route.query, {key: this.myQueue[index].key})

@@ -22,6 +22,9 @@ export default function (store) {
         snapshot.save(state)
         snapshotRef.set(state.match)
       }
+    } else if (mutation.type === 'RESET_GAME_SCORES') {
+      snapshot.save(state)
+      snapshotRef.set(state.match)
     }
   })
 }

@@ -1,13 +1,13 @@
 class Clock {
   constructor () {
-    this.then = Date.now()
     this.duration = 0
   }
 
-  initClock (cb) {
+  initClock (then, cb) {
+    this.then = Date.now()
     this.clock = setInterval(() => {
       var sec, min, hour
-      this.duration = (Date.now() - this.then) / 1000
+      this.duration = (Date.now() - this.then) / 1000 + (then || 0)
       if (this.duration < 60) return cb('00:00:' + ('0' + Math.floor(this.duration)).slice(-2))
       if (this.duration / 60 < 60) {
         sec = ('0' + Math.floor(this.duration % 60)).slice(-2)
