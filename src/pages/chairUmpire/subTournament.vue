@@ -28,10 +28,10 @@ div
         span(slot="body") 报名名单 & 排阵
       link-cell(@click="go('chairUmpireViewOrders')")
         span(slot="body") 对阵表
+      link-cell(@click="go('chairUmpireSubTournamentStart')")
+        span(slot="body") 设置场地 / 裁判
       link-cell(@click="go('chairUmpireQueue')")
         span(slot="body") 比赛队列
-      link-cell(@click="go('chairUmpireSubTournamentStart')")
-        span(slot="body") 开始比赛
 
 </template>
 
