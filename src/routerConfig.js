@@ -49,6 +49,9 @@ export default function (router) {
     '/tournaments/create': {
       name: 'createTournament',
       component: require('./pages/tournament/create')
+    },
+    '/realtime': {
+      component: require('./pages/realtimeScores')
     }
   })
 
