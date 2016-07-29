@@ -138,11 +138,13 @@ div
       groupPromoted () {
         return this.groupsStage.map(el => {
           return el.teams.map(el => {
-            if (el.scores.w > el.scores.l) {
+            var wSize = _.size(el.scores.w)
+            var lSize = _.size(el.scores.l)
+            if (wSize > lSize) {
               return {
                 userObj: this.getUserObj(el.objectId)[0],
-                w: el.scores.w,
-                l: el.scores.l
+                w: wSize,
+                l: lSize
               }
             }
           }).filter(x => x)

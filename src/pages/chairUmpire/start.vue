@@ -3,16 +3,17 @@ div
   navbar-view
     .left
       a.link(href="javascript:;", @click="back") 返回
-    .center 开始比赛
+    .center 设置场地
     .right
-      a.link(href="javascript:;", @click="start") 开始
+      a.link(href="javascript:;", @click="save") 保存
   toast(type="loading", v-show="$loadingRouteData") 加载中...
+  toast(v-show="saveSuccessfullToastShow") 保存成功
   main(v-if="!$loadingRouteData")
     cells-title 场地设置
-    template(v-for="(index, el) in court", track-by="$index")
+    template(v-for="(index, el) in courts", track-by="$index")
       cells(type="form")
-        input-cell(type="text", label="场地名称", placeholder="请输入场地名称，如1号场地", :value.sync="court[index].name")
-        select-cell(:after="true", :options="umpireOptions", :selected.sync="court[index].umpireSelected")
+        input-cell(type="text", label="场地名称", placeholder="请输入场地名称，如1号场地", :value.sync="courts[index].name")
+        select-cell(:after="true", :options="umpireOptions", :selected.sync="courts[index].umpire")
           span(slot="header") 裁判
     .buttons
       a.button(@click="addCourt", href="javascript:;") 添加场地
@@ -30,6 +31,9 @@ div
     Toast
   } from 'vue-weui'
   import _ from 'lodash'
+  import AV from '../../js/AV'
+  import {toArray} from '../../js/utils'
+  import {getUserObj} from '../../js/methods'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
   import {addOthersUserObj} from '../../vuex/actions/user'
 
@@ -47,6 +51,21 @@ div
         return this.addChairUmpiredTournaments()
         .then(ret => {
           return this.addOthersUserObj(ret)
+        }).then(ret => {
+          return AV.Cloud.run('tournamentRealtime', {
+            method: 'getCourts',
+            tournamentObjId: this.$route.query.main,
+            subTournamentObjId: this.$route.query.sub
+          })
+        }).then(ret => {
+          ret = toArray(ret)
+          this.courts = ret.map(el => {
+            return {
+              name: el.name,
+              umpire: el.umpire
+            }
+          })
+          return this.addOthersUserObj(ret.map(el => el.umpire))
         })
       }
     },
@@ -71,7 +90,7 @@ div
       umpireOptions () {
         if (!this.myChairUmpiredTournaments.length) return []
         return [{text: '请选择', value: ''}].concat(this.subTournament.umpires.map(el => {
-          var r = _.find(this.otherUserObjs, {objectId: el}) || this.userObj
+          var r = this.getUserObj(el)[0]
           return {
             text: r.nickname,
             value: el
@@ -82,7 +101,8 @@ div
     data () {
       return {
         courtsNum: '',
-        court: [{name: '', umpireSelected: ''}, {name: '', umpireSelected: ''}, {name: '', umpireSelected: ''}]
+        courts: [{name: '', umpire: ''}, {name: '', umpire: ''}, {name: '', umpire: ''}],
+        saveSuccessfullToastShow: false
       }
     },
     methods: {
@@ -90,11 +110,22 @@ div
         window.history.back()
       },
       addCourt () {
-        this.court.push({name: '', umpireSelected: ''})
+        this.courts.push({name: '', umpire: ''})
       },
-      start () {
-        return
-      }
+      save () {
+        return AV.Cloud.run('tournamentRealtime', {
+          method: 'saveCourts',
+          tournamentObjId: this.$route.query.main,
+          subTournamentObjId: this.$route.query.sub,
+          courts: this.courts.filter(x => x.name && x.umpire)
+        }).then(ret => {
+          this.saveSuccessfullToastShow = true
+          window.setTimeout(() => {
+            this.saveSuccessfullToastShow = false
+          }, 1000)
+        })
+      },
+      getUserObj
     },
     ready () {
       window.vm = this

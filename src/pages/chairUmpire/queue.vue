@@ -159,18 +159,24 @@ export default {
   },
   computed: {
     preparingMatchesOptions () {
-      var preparingMatches = _.flattenDeep(this.groups.map((el, groupIndex) => {
-        return el.matches.map((el, matchIndex) => {
+      var preparingMatches = _.flattenDeep(this.groups.map((group, groupIndex) => {
+        return group.matches.map((el, matchIndex) => {
           if (el.state === 'preparing') {
             var text = el.teams.map(el => {
-              return (_.find(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+              return this.getUserObj(el.objectId)[0].nickname
             }).join(' vs ') + ` 组${groupIndex + 1}场${matchIndex + 1}`
+            var teamIndex = _.flatten(el.teams.map(el => {
+              return group.teams.map((el2, index) => {
+                if (el.objectId === el2.objectId) return index
+              })
+            })).filter(x => x === 0 ? true : x)
             return {
               text,
               value: JSON.stringify({
                 stage: 'groups',
                 groupIndex,
                 matchIndex,
+                teamIndex,
                 teams: el.teams.map(el => el.objectId)
               })
             }
@@ -198,7 +204,6 @@ export default {
           }
         })
       })).filter(x => x)
-      console.log(playoffs)
       return [{text: '请选择', value: ''}].concat(preparingMatches).concat(playoffs)
     },
     courtsOptions () {

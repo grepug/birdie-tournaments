@@ -23,7 +23,8 @@ const state = {
   matchIds: {},
   withdrawl: null,
   results: null,
-  lastScoreDate: null
+  lastScoreDate: null,
+  winnerIndex: null
 }
 
 const mutations = {
