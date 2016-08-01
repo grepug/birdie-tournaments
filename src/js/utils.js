@@ -102,3 +102,12 @@ export const getStageCN = function (stage) {
     return `淘汰赛 ${stage.round}强 第${stage.matchIndex}场`
   }
 }
+
+export const arrGroup = function (arr, groupsLen) {
+  var len = arr.length
+  var size = Math.floor(len / groupsLen)
+  var ret = _.range(groupsLen)
+  return ret.map((el, index) => {
+    return index !== groupsLen - 1 ? arr.slice(index * size, (index + 1) * size) : arr.slice(index * size)
+  })
+}

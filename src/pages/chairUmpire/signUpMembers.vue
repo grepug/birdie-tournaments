@@ -43,7 +43,7 @@ div
   } from 'vue-weui'
   import _ from 'lodash'
   import AV from '../../js/AV'
-  import {isSingle, groupArr} from '../../js/utils'
+  import {isSingle, groupArr, arrGroup} from '../../js/utils'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
   import {addOthersUserObj} from '../../vuex/actions/user'
   import Sortable from 'sortablejs'
@@ -161,7 +161,7 @@ div
         switch (key) {
           case 'orderByGroups':
             if (state !== 'signingUpDue') break
-            this.groups = _.chunk(this.signUpMembers, 4)
+            this.groups = arrGroup(this.signUpMembers, window.prompt('分成几组'))
             window.setTimeout(() => {
               this.openSortable()
             }, 10)
