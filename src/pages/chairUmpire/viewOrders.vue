@@ -11,10 +11,10 @@ div
       cells-title 第{{index + 1}}组
       link-cell.row(v-for="team in el.teams")
         span(slot="header") {{team.nickname}}
-        span(slot="footer") 2:1
+        span(slot="footer") {{team.scores.join(' : ')}}
       link-cell.row(v-for="match in el.matches")
         span(slot="header") {{match.nicknames.join(' vs ')}}
-        span(slot="footer") {{match.scores.join(':')}}
+        span(slot="footer") {{match.scores}}
 </template>
 
 <script>
@@ -27,6 +27,7 @@ div
   } from 'vue-weui'
   import _ from 'lodash'
   import {isSingle} from '../../js/utils'
+  import {getUserObj} from '../../js/methods'
   import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
   import {addOthersUserObj} from '../../vuex/actions/user'
 
@@ -86,15 +87,28 @@ div
           return {
             teams: el.teams.map(el => {
               return {
-                nickname: (_.find(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname,
+                nickname: this.getUserObj(el.objectId)[0].nickname,
                 objectId: el.objectId,
-                scores: el.scores
+                scores: [_.size(el.scores.w), _.size(el.scores.l)]
               }
+            }).sort((v1, v2) => {
+              var a = v1.scores[0] - v1.scores[1]
+              var b = v2.scores[0] - v2.scores[1]
+              if (a > b) return -1
+              if (a < b) return 1
+              if (a === b) {
+                if (v1.scores[1] > v2.scores[1]) return 1
+                if (v1.scores[1] < v2.scores[1]) return -1
+              }
+              return 0
             }),
             matches: el.matches.map(el => {
               el.nicknames = el.teams.map(el => {
-                return (_.find(this.otherUserObjs, {objectId: el.objectId}) || this.userObj).nickname
+                return this.getUserObj(el.objectId)[0].nickname
               })
+              el.scores = this.queue[el.queueKey]
+              ? this.queue[el.queueKey].lastSnapshot.matchScores.join(' : ')
+              : '0 : 0'
               return el
             })
           }
@@ -113,7 +127,8 @@ div
     methods: {
       back () {
         window.history.back()
-      }
+      },
+      getUserObj
     },
     ready () {
       window.vm = this

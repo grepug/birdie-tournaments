@@ -43,7 +43,7 @@ div
   } from 'vue-weui'
   import _ from 'lodash'
   import AV from '../../js/AV'
-  import {isSingle, groupArr, arrGroup} from '../../js/utils'
+  import {isSingle, groupArr, arrGroup, toArray} from '../../js/utils'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
   import {addOthersUserObj} from '../../vuex/actions/user'
   import Sortable from 'sortablejs'
@@ -79,7 +79,7 @@ div
             subTournamentObjId: this.$route.query.sub
           })
         }).then(ret => {
-          this.groupsStage = ret
+          this.groupsStage = toArray(ret)
         })
       }
     },
