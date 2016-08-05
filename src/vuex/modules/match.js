@@ -21,7 +21,7 @@ const state = {
   isGameInterval: false,
   gameIntervalTimer: 0,
   matchIds: {},
-  withdrawl: null,
+  withdrawal: null,
   results: null,
   lastScoreDate: null,
   winnerIndex: null
@@ -73,8 +73,8 @@ const mutations = {
     state.isGameInterval = false
     state.gameIntervalTimer = 0
   },
-  SET_WITHDRAWL (state, index) {
-    state.withdrawl = index
+  SET_WITHDRAWAL (state, index) {
+    state.withdrawal = index
   },
   SET_MATCH_RESULTS (state, results) {
     state.results = results
