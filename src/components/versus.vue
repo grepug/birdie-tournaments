@@ -3,7 +3,7 @@
     section
       .team.team1
         .team-head(@click="headClick(0)")
-          img(v-for="el in teams[0]", :src="el.headimgurl", :style="{borderColor: el.sex === 1 ? 'blue' : 'red'}")
+          img(v-for="el in teams[0]", :src="el.headimgurl || defaultHeadimg", :style="{borderColor: el.sex === 1 ? 'blue' : 'red'}")
         .name(v-text="name1")
         .point(v-text="points[0]")
         .button
@@ -13,7 +13,7 @@
         div :
       .team.team2
         .team-head(@click="headClick(1)")
-          img(v-for="el in teams[1]", :src="el.headimgurl", :style="{borderColor: el.sex === 1 ? 'blue' : 'red'}")
+          img(v-for="el in teams[1]", :src="el.headimgurl || defaultHeadimg", :style="{borderColor: el.sex === 1 ? 'blue' : 'red'}")
         .name(v-text="name2")
         .point(v-text="points[1]")
         .button
@@ -43,7 +43,8 @@
     },
     data () {
       return {
-        buttonDisabled: false
+        buttonDisabled: false,
+        defaultHeadimg: 'http://blog.bzxxg.cn/wp-content/uploads/2013/07/guest.png'
       }
     },
     computed: {
