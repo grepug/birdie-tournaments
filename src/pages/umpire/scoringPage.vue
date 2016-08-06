@@ -19,6 +19,7 @@ div
       h4(style="text-align: center") 中场间歇还有{{gameIntervalTimer}}秒
     toast(type="loading", v-show="revertingToastShow") 撤销中
     toast(type="loading", v-show="loadingToastShow") 加载中...
+    //- actionsheet(:show.sync="withdrawalActionShow", :menus="withdrawalActionMenus", @weui-menu-click="handleWithdrawal")
     cells
       link-cell()
         span(slot="body") 得分
@@ -37,7 +38,7 @@ div
         span(slot="footer") {{scoringSysCN}}
     .buttons
       a.button(href="javascript:;", @click="undo") 撤销
-      a.button(href="javascript:;") 暂停
+      a.button(href="javascript:;", @click="withdraw") 退赛
       a.button(href="javascript:;", @click="matchComplete", v-show="matchCompleted") 完成
 </template>
 
@@ -49,7 +50,8 @@ import {
 import {
   Dialog,
   Cells, LinkCell, InputCell, SelectCell,
-  Toast
+  Toast,
+  Actionsheet
 } from 'vue-weui'
 import _ from 'lodash'
 import AV from '../../js/AV'
@@ -70,7 +72,8 @@ export default {
     versusView,
     Dialog,
     Cells, LinkCell, InputCell, SelectCell,
-    Toast
+    Toast,
+    Actionsheet
   },
   route: {
     // data: subTournamentRealtime
@@ -83,6 +86,21 @@ export default {
       }).then(ret => {
         // ret.stage.teams = ret.stage.teams.map(el => toArray(el))
         this.queue = ret
+        this.saveMatchIds()
+        this.saveMatchSettings(this.queue.matchSettings)
+        if (ret.state === 'upcoming') {
+          this.initDialogShow = true
+          snapshot.reset()
+          console.log(this.$store.state)
+          console.log(2)
+          snapshot.save(this.$store.state)
+        } else if (ret.state === 'ongoing') {
+          console.log(1)
+          snapshot.recover(snapshot.get(1))
+          clock.initClock(this.matchDuration, cl => {
+            this.clockTicking(cl, clock.duration)
+          })
+        }
         return this.addOthersUserObj(_.flattenDeep(ret.stage.teams))
       })
     }
@@ -200,6 +218,11 @@ export default {
         //   this.leftTeamSelected === '0' || dispatch('EXCHANGE_SIDES')
         //   this.initDialogShow = false
         // })
+      },
+      handleWithdrawal ({dispatch}, index) {
+        if (!window.confirm('确认退赛 ?')) return
+        console.log(index)
+        dispatch('CHANGE_MATCH_STATE', 'completed')
       }
     }
   },
@@ -216,7 +239,8 @@ export default {
       leftTeamSelected: '',
       serviceTeamOptions: [],
       serviceTeamSelected: '',
-      revertingToastShow: false
+      revertingToastShow: false,
+      withdrawalActionShow: false
     }
   },
   computed: {
@@ -245,6 +269,12 @@ export default {
         console.log(t)
         return this.sideExchanged ? t.reverse() : t
       }
+    },
+    withdrawalActionMenus () {
+      return {
+        0: this.teams[0].map(el => el.nickname).join(' / ') + ' 退赛',
+        1: this.teams[1].map(el => el.nickname).join(' / ') + ' 退赛'
+      }
     }
   },
   methods: {
@@ -268,17 +298,11 @@ export default {
         return snapshot.undo()
       })
     },
+    withdraw () {
+      this.withdrawalActionShow = true
+    },
     matchComplete () {
       clock.cancel()
-      // this.saveMatch().then(ret => {
-      //   console.log(ret)
-      //   this.setMatchResults({
-      //     maxConsecutivePoints: ret.maxConsecutivePoints,
-      //     maxMatchConsecutivePoints: ret.maxMatchConsecutivePoints,
-      //     scoringArr: ret.scoringArr
-      //   })
-      //   this.matchCompletedDialogShow = true
-      // }).catch(err => console.log(err))
       this.loadingToastShow = true
       return AV.Cloud.run('tournamentRealtime', {
         method: 'matchComplete',
@@ -288,8 +312,8 @@ export default {
         lastSnapshot: snapshot.get(1),
         stage: this.queue.stage
       }).then(ret => {
-        console.log(ret)
         this.loadingToastShow = false
+        snapshot.reset()
         this.$router.go({
           name: 'umpireSubTournament',
           query: {
@@ -304,18 +328,7 @@ export default {
     queue (val, oldVal) {
       if (!val) return
       if (oldVal === null) {
-        this.saveMatchIds()
-        this.saveMatchSettings(this.queue.matchSettings)
-        if (this.queue.state === 'upcoming') {
-          this.initDialogShow = true
-          snapshot.reset()
-          snapshot.save(this.$store.state)
-        } else if (this.queue.state === 'ongoing') {
-          snapshot.recover(snapshot.get(1))
-          clock.initClock(this.matchDuration, cl => {
-            this.clockTicking(cl, clock.duration)
-          })
-        }
+
       }
     }
   },

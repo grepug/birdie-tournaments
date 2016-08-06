@@ -1,31 +1,33 @@
 import _ from 'lodash'
 
-const state = {
-  matchSettings: {},
-  matchState: 'playing', // preparing, playing, completed
-  matchClock: '00:00:00',
-  matchDuration: 0,
-  scores: {
-    '0': 0,
-    '1': 0
-  },
-  scoresFlow: [],
-  sideExchanged: false,
-  matchGames: [],
-  matchScores: {
-    '0': 0,
-    '1': 0
-  },
-  lastScoredTeamIndex: 1,
-  gameNumber: 1,
-  isGameInterval: false,
-  gameIntervalTimer: 0,
-  matchIds: {},
-  withdrawal: null,
-  results: null,
-  lastScoreDate: null,
-  winnerIndex: null
+const genState = function () {
+  return {
+    matchState: 'playing', // preparing, playing, completed
+    matchClock: '00:00:00',
+    matchDuration: 0,
+    scores: {
+      '0': 0,
+      '1': 0
+    },
+    scoresFlow: [],
+    sideExchanged: false,
+    matchGames: [],
+    matchScores: {
+      '0': 0,
+      '1': 0
+    },
+    lastScoredTeamIndex: 0,
+    gameNumber: 1,
+    isGameInterval: false,
+    gameIntervalTimer: 0,
+    withdrawal: null,
+    results: null,
+    lastScoreDate: null,
+    winnerIndex: null
+  }
 }
+
+const state = _.assign(genState(), {matchSettings: {}, matchIds: {}})
 
 const mutations = {
   CHANGE_MATCH_STATE (state, matchState) {
@@ -80,19 +82,23 @@ const mutations = {
     state.results = results
   },
   SAVE_MATCH_IDS (state, ids) {
+    console.log(ids)
     state.matchIds = ids
   },
   SET_MATCH_SETTINGS (state, obj) {
     state.matchSettings = obj
   },
   MATCH_RECOVER (state, obj) {
-    _.extend(state, obj)
+    _.assign(state, obj)
   },
   MATCH_REVERT (state, obj) {
-    _.extend(state, obj)
+    _.assign(state, obj)
   },
   SET_CLOCK (state, clock) {
     state.lastScoreDate = clock
+  },
+  RESET_ALL (state) {
+    _.assign(state, genState())
   }
 }
 

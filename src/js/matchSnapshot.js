@@ -33,8 +33,7 @@ export default {
   },
 
   recover (snapshot) {
-    console.log(snapshot)
-    store.dispatch('MATCH_RECOVER', snapshot)
+    snapshot && store.dispatch('MATCH_RECOVER', snapshot)
   },
 
   save ({match}) {
@@ -52,6 +51,8 @@ export default {
   },
 
   reset () {
+    store.dispatch('RESET_ALL')
+    window.localStorage.setItem(KEY, '')
     window.localStorage.removeItem(KEY)
   },
 
