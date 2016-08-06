@@ -204,6 +204,7 @@ export default {
         }).then(ret => {
           console.log(ret)
           this.leftTeamSelected === '0' || dispatch('EXCHANGE_SIDES')
+          dispatch('SET_LAST_SCORED_TEAM', this.serviceTeamSelected)
           this.initDialogShow = false
           this.loadingToastShow = false
           clock.initClock(null, (cl) => {
@@ -212,12 +213,6 @@ export default {
         }).catch(() => {
           this.loadingToastShow = false
         })
-        // this.ref.child(`queue/${this.key}`).update({
-        //   state: 'ongoing'
-        // }, () => {
-        //   this.leftTeamSelected === '0' || dispatch('EXCHANGE_SIDES')
-        //   this.initDialogShow = false
-        // })
       },
       handleWithdrawal ({dispatch}, index) {
         if (!window.confirm('确认退赛 ?')) return

@@ -46,6 +46,9 @@ const mutations = {
     })
     state.lastScoredTeamIndex = team
   },
+  SET_LAST_SCORED_TEAM (state, teamIndex) {
+    state.lastScoredTeamIndex = parseInt(teamIndex)
+  },
   RESET_GAME_SCORES (state) {
     state.scores = {'0': 0, '1': 0}
   },
