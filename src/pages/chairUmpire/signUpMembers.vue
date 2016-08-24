@@ -218,7 +218,6 @@ div
               this.sortableState = 'closed'
             }).catch(err => console.log(err))
           case 'orderAsElimination':
-            console.log(1)
             return AV.Cloud.run('tournamentRealtime', {
               method: 'savePlayoffs',
               tournamentObjId: query.main,

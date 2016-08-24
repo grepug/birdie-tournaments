@@ -94,6 +94,21 @@ export const bestOfCN = function (bestOf) {
   }
 }
 
+export const roundTitleCN = function (round) {
+  switch (parseInt(round)) {
+    case 2:
+      return '决赛'
+    case 4:
+      return '半决赛'
+    case 8:
+      return '四分之一决赛'
+    case 16:
+      return '八分之一决赛'
+    default:
+      return '未知'
+  }
+}
+
 export const getStageCN = function (stage) {
   if (stage.stage === 'groups') {
     return `小组赛 第${stage.groupIndex + 1}组 第${stage.matchIndex + 1}场`

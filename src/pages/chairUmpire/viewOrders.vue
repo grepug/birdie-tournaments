@@ -7,14 +7,26 @@ div
     .right
       a.link(href="javascript:;")
   main
-    template(v-for="(index, el) in thisGroups")
-      cells-title 第{{index + 1}}组
-      link-cell.row(v-for="team in el.teams")
-        span(slot="header") {{team.nickname}}
-        span(slot="footer") {{team.scores.join(' : ')}}
-      link-cell.row(v-for="match in el.matches")
-        span(slot="header") {{match.nicknames.join(' vs ')}}
-        span(slot="footer") {{match.scores}}
+    cells(type="split")
+      select-cell(:after="true", :options="viewOptions", :selected.sync="viewSelected")
+        span(slot="header") 查看
+    template(v-if="viewSelected === 'groups'", v-for="(index, group) in thisGroups")
+      select-cell(:after="true", :options="groupIndexOptions", :selected.sync="groupIndexSelected")
+        span(slot="header") 小组
+      template(v-if="index === groupIndexSelected")
+        link-cell.row(v-for="team in group.teams")
+          span(slot="header") {{team.nickname}}
+          span(slot="footer") {{team.scores.join(' : ')}}
+        link-cell.row(v-for="match in group.matches")
+          span(slot="header") {{match.nicknames.join(' vs ')}}
+          span(slot="footer") {{match.scores}}
+    template(v-if="viewSelected === 'eliminations'")
+      template(v-for="el in thisPlayoffs")
+        cells-title {{el.roundTitle}}
+        cells
+          link-cell(v-for="el in el.matches")
+            span(slot="header") {{el.nicknames}}
+            span(slot="footer") {{el.scores}}
 </template>
 
 <script>
@@ -23,10 +35,11 @@ div
   } from '../../components'
   import {bracket, group} from 'vue-bracket'
   import {
-    Cells, LinkCell, CellsTitle
+    Cells, LinkCell, CellsTitle,
+    SelectCell
   } from 'vue-weui'
   import _ from 'lodash'
-  import {isSingle} from '../../js/utils'
+  import {isSingle, roundTitleCN} from '../../js/utils'
   import {getUserObj} from '../../js/methods'
   import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
   import {addOthersUserObj} from '../../vuex/actions/user'
@@ -36,7 +49,8 @@ div
       navbarView,
       bracket,
       group,
-      Cells, LinkCell, CellsTitle
+      Cells, LinkCell, CellsTitle,
+      SelectCell
     },
     route: {
       data () {
@@ -107,10 +121,38 @@ div
                 return this.getUserObj(el.objectId)[0].nickname
               })
               el.scores = this.queue[el.queueKey]
-              ? this.queue[el.queueKey].lastSnapshot.matchScores.join(' : ')
-              : '0 : 0'
+              ? this.queue[el.queueKey].lastSnapshot.matchGames.map(el => el.scores.join(':')).join(' ')
+              : '-'
               return el
             })
+          }
+        })
+      },
+      thisPlayoffs () {
+        return this.playoffs.map(el => {
+          var {queueKey} = el
+          var thisQueue = this.queue[queueKey]
+          return {
+            roundTitle: roundTitleCN(el.round),
+            matches: el.matches.map(el => {
+              el.nicknames = el.teams.map(el => {
+                return this.getUserObj(el.objectId)[0].nickname
+              }).join(' vs ')
+              el.scores = thisQueue
+              ? this.queue[el.queueKey].lastSnapshot.matchGames.map(el => el.scores.join(':')).join(' ')
+              : '-'
+              return el
+            })
+          }
+        })
+      },
+      groupIndexOptions () {
+        var len = this.groups.length
+        if (!len) return []
+        return _.range(len).map(el => {
+          return {
+            value: el,
+            text: `第${el + 1}组`
           }
         })
       }
@@ -121,7 +163,10 @@ div
         groups: [],
         playoffs: [],
         courts: [],
-        queue: []
+        queue: [],
+        groupIndexSelected: 0,
+        viewOptions: [{text: '小组赛', value: 'groups'}, {text: '淘汰赛', value: 'eliminations'}],
+        viewSelected: 'groups'
       }
     },
     methods: {
