@@ -234,7 +234,8 @@ div
               tournamentObjId: query.main,
               subTournamentObjId: query.sub,
               order,
-              stage: this.orderMethod
+              stage: this.orderMethod,
+              discipline: this.subTournament.discipline
             }).then(ret => {
               console.log(ret)
               this.sortableState = 'closed'

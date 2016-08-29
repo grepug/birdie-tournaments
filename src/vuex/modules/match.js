@@ -79,7 +79,7 @@ const mutations = {
     state.gameIntervalTimer = 0
   },
   SET_WITHDRAWAL (state, index) {
-    state.withdrawal = index
+    state.withdrawal = parseInt(index)
   },
   SET_MATCH_RESULTS (state, results) {
     state.results = results
@@ -102,6 +102,9 @@ const mutations = {
   },
   RESET_ALL (state) {
     _.assign(state, genState())
+  },
+  SET_WINNER_INDEX (state, winnerIndex) {
+    state.winnerIndex = winnerIndex
   }
 }
 

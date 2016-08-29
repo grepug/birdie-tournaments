@@ -19,7 +19,7 @@ div
       h4(style="text-align: center") 中场间歇还有{{gameIntervalTimer}}秒
     toast(type="loading", v-show="revertingToastShow") 撤销中
     toast(type="loading", v-show="loadingToastShow") 加载中...
-    //- actionsheet(:show.sync="withdrawalActionShow", :menus="withdrawalActionMenus", @weui-menu-click="handleWithdrawal")
+    actionsheet(:show.sync="withdrawalActionShow", :menus="withdrawalActionMenus", @weui-menu-click="handleWithdrawal")
     cells
       link-cell()
         span(slot="body") 得分
@@ -56,8 +56,8 @@ import {
 import _ from 'lodash'
 import AV from '../../js/AV'
 import {historyBack, isSingle, exchange, toArray, disciplineCN, bestOfCN} from '../../js/utils'
-import {getUserObj} from '../../js/methods'
-import {addOthersUserObj} from '../../vuex/actions/user'
+import {getUserObj, getDoublesObj} from '../../js/methods'
+import {addOthersUserObj, addDoubles} from '../../vuex/actions/user'
 // import {subTournamentRealtime} from '../../js/routeData'
 import Clock from '../../js/Clock'
 // import {saveMatch} from '../../vuex/actions/match'
@@ -86,6 +86,7 @@ export default {
       }).then(ret => {
         // ret.stage.teams = ret.stage.teams.map(el => toArray(el))
         this.queue = ret
+        this.isSingle = isSingle(this.queue.matchSettings.discipline)
         this.saveMatchIds()
         this.saveMatchSettings(this.queue.matchSettings)
         if (ret.state === 'upcoming') {
@@ -101,7 +102,12 @@ export default {
             this.clockTicking(cl, clock.duration)
           })
         }
-        return this.addOthersUserObj(_.flattenDeep(ret.stage.teams))
+        var teams = _.flattenDeep(ret.stage.teams)
+        if (this.isSingle) {
+          return this.addOthersUserObj(teams)
+        }
+        return this.addDoubles(teams)
+        .then(ret => this.addOthersUserObj(ret))
       })
     }
   },
@@ -140,10 +146,12 @@ export default {
         return bestOfCN(match.matchSettings.bestOf)
       },
       matchCompleted: ({match}) => match.matchState === 'completed',
-      scoresFlowLen: ({match}) => match.scoresFlow.length
+      scoresFlowLen: ({match}) => match.scoresFlow.length,
+      winnerIndex: ({match}) => match.winnerIndex
     },
     actions: {
       addOthersUserObj,
+      addDoubles,
       clockTicking: ({dispatch}, cl, dur) => dispatch('CHANGE_MATCH_DURATION', cl, dur),
       saveMatchSettings: ({dispatch}, obj) => dispatch('SET_MATCH_SETTINGS', obj),
       saveMatchIds ({dispatch}) {
@@ -179,6 +187,7 @@ export default {
           var willWinTheMatch = willWinTheGame && (Math.ceil(matchSettings.bestOf / 2) === match.matchScores[index] + 1)
           if (willWinTheMatch) { // 赢得一场比赛
             console.log('match win')
+            dispatch('SET_WINNER_INDEX', index)
             dispatch('CHANGE_MATCH_STATE', 'completed')
             dispatch('PUSH_MATCH_GAME', index)
           } else {
@@ -218,6 +227,8 @@ export default {
         if (!window.confirm('确认退赛 ?')) return
         console.log(index)
         dispatch('CHANGE_MATCH_STATE', 'completed')
+        dispatch('SET_WITHDRAWAL', index)
+        dispatch('SET_WINNER_INDEX', exchange(index))
       }
     }
   },
@@ -241,6 +252,12 @@ export default {
   computed: {
     leftTeamOptions () {
       return [{text: '请选择', value: ''}].concat(this.teams.map((el, index) => {
+        // var text
+        // if (this.isSingle) {
+        //   text = el.map(el => el.nickname).join('/')
+        // } else {
+        //   text = el.map(el => )
+        // }
         return {
           text: el.map(el => el.nickname).join('/'),
           value: index + ''
@@ -256,14 +273,17 @@ export default {
           return [{nickname: '加载中'}]
         })
       }
-      if (isSingle(this.queue.matchSettings.discipline)) {
-        console.log(this.queue.stage.teams)
-        var t = this.queue.stage.teams.map(el => {
+      var t
+      console.log(this.queue.stage.teams)
+      if (this.isSingle) {
+        t = this.queue.stage.teams.map(el => {
           return this.getUserObj(el)
         })
-        console.log(t)
-        return this.sideExchanged ? t.reverse() : t
+      } else {
+        t = this.queue.stage.teams.map(el => this.getDoublesObj(el)[0].players.map(el => this.getUserObj(el)[0]))
       }
+      console.log(t)
+      return this.sideExchanged ? t.reverse() : t
     },
     withdrawalActionMenus () {
       return {
@@ -275,6 +295,7 @@ export default {
   methods: {
     historyBack,
     getUserObj,
+    getDoublesObj,
     undo () {
       var match = this.$store.state.match
       if (match.matchState === 'preparing') return
