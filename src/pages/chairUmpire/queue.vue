@@ -77,8 +77,8 @@ import _ from 'lodash'
 import AV from '../../js/AV'
 import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
 import {isSingle} from '../../js/utils'
-import {addOthersUserObj} from '../../vuex/actions/user'
-import {getUserObj} from '../../js/methods'
+import {addOthersUserObj, addDoubles} from '../../vuex/actions/user'
+import {getUserObj, getDoublesObj} from '../../js/methods'
 
 export default {
   components: {
@@ -101,17 +101,27 @@ export default {
         snapshot.forEach(data => {
           var key = data.key()
           var val = data.val()
+          console.log(key)
           switch (key) {
             case 'groups':
               this.groups = val
-              this.addOthersUserObj(_.flattenDeep(val.map(el => {
+              var objs = val.map(el => {
                 return el.teams.map(el => el.objectId)
-              })))
+              })
+              if (this.isSingle) {
+                this.addOthersUserObj(_.flattenDeep(objs))
+              } else {
+                this.addDoubles(_.flattenDeep(objs))
+                .then(ret => {
+                  return ret ? this.addOthersUserObj(ret) : Promise.resolve()
+                })
+              }
               break
             case 'playoffs':
               this.playoffs = val
               break
             case 'queue':
+              console.log(val)
               this.queue = val
               break
             case 'courts':
@@ -133,7 +143,8 @@ export default {
       userObj: ({user}) => user.userObj
     },
     actions: {
-      addOthersUserObj
+      addOthersUserObj,
+      addDoubles
     }
   },
   data () {
@@ -162,8 +173,16 @@ export default {
       var preparingMatches = _.flattenDeep(this.groups.map((group, groupIndex) => {
         return group.matches.map((el, matchIndex) => {
           if (el.state === 'preparing') {
-            var text = el.teams.map(el => {
-              return this.getUserObj(el.objectId)[0].nickname
+            var text
+            if (this.isSingle) {
+              text = el.teams.map(el => {
+                return this.getUserObj(el.objectId)[0].nickname
+              }).join(' vs ') + ` 组${groupIndex + 1}场${matchIndex + 1}`
+            }
+            text = el.teams.map(el => {
+              return this.getDoublesObj(el.objectId)[0].players.map(el => {
+                return this.getUserObj(el)[0].nickname
+              }).join('/')
             }).join(' vs ') + ` 组${groupIndex + 1}场${matchIndex + 1}`
             var teamIndex = _.flatten(el.teams.map(el => {
               return group.teams.map((el2, index) => {
@@ -227,6 +246,12 @@ export default {
           }).join(' vs ')
         } else { // 双打
           // to do
+          vs = match.teams.map(el => {
+            return this.getDoublesObj(el.objectId)[0].players.map(el => {
+              return this.getUserObj(el)[0].nickname
+            }).join('/')
+          }).join(' vs ')
+          console.log(vs)
         }
         return {
           vs,
@@ -294,7 +319,8 @@ export default {
       this.dialogShow = false
       this.editDialogShow = false
     },
-    getUserObj
+    getUserObj,
+    getDoublesObj
   },
   ready () {
     window.vm = this

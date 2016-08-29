@@ -21,9 +21,10 @@ const mutations = {
     })
   },
   ADD_DOUBLES (state, doublesObjs) {
+    console.log(doublesObjs)
     doublesObjs.forEach(obj => {
       var r = _.find(state.doubles, {objectId: obj.objectId})
-      if (!r) state.doubles.push(obj)
+      r || state.doubles.push(obj)
     })
   }
 }

@@ -1,7 +1,7 @@
-import _ from 'lodash'
+// import _ from 'lodash'
 import AV from '../../js/AV'
-import {addOthersUserObj} from './user'
-import {isSingle, duplicate, beArray} from '../../js/utils'
+// import {addOthersUserObj, addDoubles} from './user'
+import {duplicate, beArray} from '../../js/utils'
 
 export const addChairUmpiredTournaments = ({dispatch, state}) => {
   if (state.tournaments.chairUmpiredTournaments && state.tournaments.chairUmpiredTournaments.length) return Promise.resolve()
@@ -9,10 +9,16 @@ export const addChairUmpiredTournaments = ({dispatch, state}) => {
     method: 'getMyChairUmpiredTournaments'
   }).then(ret => {
     dispatch('ADD_CHAIRUMPIRED_TOURNAMENTS', ret)
-    var userObjIds = _.flattenDeep(ret.map(el => el.subTournaments.map(el => {
-      if (isSingle(el.discipline)) return el.signUpMembers.concat(el.umpires)
-    }))).filter(x => x)
-    return addOthersUserObj({dispatch, state}, userObjIds)
+    // var userObjIds = _.flattenDeep(ret.map(el => el.subTournaments.map(el => {
+    //   if (isSingle(el.discipline)) return el.signUpMembers.concat(el.umpires)
+    // }))).filter(x => x)
+    // console.log(userObjIds)
+    // var pro1 = addOthersUserObj({dispatch, state}, userObjIds)
+    // var promises = ret.map(el => el.subTournaments.map(el => {
+    //   if (!isSingle(el.discipline)) return addDoubles(el.signUpMembers)
+    // })).filter(x => x)
+    // var pro2 = Promise.all(promises)
+    // return Promise.all([pro1, pro2])
   })
 }
 

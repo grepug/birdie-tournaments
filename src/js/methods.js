@@ -9,3 +9,10 @@ export const getUserObj = function (ids) {
     return r || {}
   })
 }
+
+export const getDoublesObj = function (ids) {
+  var user = this.$store.state.user
+  return beArray(ids).map(el => {
+    return _.find(user.doubles, {objectId: el}) || {}
+  })
+}

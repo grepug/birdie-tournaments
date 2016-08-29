@@ -40,9 +40,9 @@ div
   } from 'vue-weui'
   import _ from 'lodash'
   import {isSingle, roundTitleCN} from '../../js/utils'
-  import {getUserObj} from '../../js/methods'
+  import {getUserObj, getDoublesObj} from '../../js/methods'
   import Wilddog from '../../../node_modules/wilddog/lib/wilddog-node'
-  import {addOthersUserObj} from '../../vuex/actions/user'
+  import {addOthersUserObj, addDoubles} from '../../vuex/actions/user'
 
   export default {
     components: {
@@ -64,9 +64,20 @@ div
             switch (key) {
               case 'groups':
                 this.groups = val
-                this.addOthersUserObj(_.flattenDeep(val.map(el => {
+                // this.addOthersUserObj(_.flattenDeep(val.map(el => {
+                //   return el.teams.map(el => el.objectId)
+                // })))
+                var objs = val.map(el => {
                   return el.teams.map(el => el.objectId)
-                })))
+                })
+                if (this.isSingle) {
+                  this.addOthersUserObj(_.flattenDeep(objs))
+                } else {
+                  this.addDoubles(_.flattenDeep(objs))
+                  .then(ret => {
+                    return ret ? this.addOthersUserObj(ret) : Promise.resolve()
+                  })
+                }
                 break
               case 'playoffs':
                 this.playoffs = val
@@ -92,20 +103,35 @@ div
         userObj: ({user}) => user.userObj
       },
       actions: {
-        addOthersUserObj
+        addOthersUserObj,
+        addDoubles
       }
     },
     computed: {
       thisGroups () {
+        console.log('groups', this.groups)
+        if (!this.groups || !this.groups.length) return []
         return this.groups.map(el => {
-          return {
-            teams: el.teams.map(el => {
+          var teams
+          if (this.isSingle) {
+            teams = el.teams.map(el => {
               return {
                 nickname: this.getUserObj(el.objectId)[0].nickname,
                 objectId: el.objectId,
-                scores: [_.size(el.scores.w), _.size(el.scores.l)]
+                scores: el.scores ? [_.size(el.scores.w), _.size(el.scores.l)] : [0, 0]
               }
-            }).sort((v1, v2) => {
+            })
+          } else {
+            teams = el.teams.map(el => {
+              return {
+                nickname: this.getDoublesObj(el.objectId)[0].players.map(el => this.getUserObj(el)[0].nickname).join('/'),
+                objectId: el.objectId,
+                scores: el.scores ? [_.size(el.scores.w), _.size(el.scores.l)] : [0, 0]
+              }
+            })
+          }
+          return {
+            teams: teams.sort((v1, v2) => {
               var a = v1.scores[0] - v1.scores[1]
               var b = v2.scores[0] - v2.scores[1]
               if (a > b) return -1
@@ -117,12 +143,12 @@ div
               return 0
             }),
             matches: el.matches.map(el => {
-              el.nicknames = el.teams.map(el => {
-                return this.getUserObj(el.objectId)[0].nickname
-              })
-              el.scores = this.queue[el.queueKey]
+              el.nicknames = this.isSingle
+              ? el.teams.map(el => this.getUserObj(el.objectId)[0].nickname)
+              : el.teams.map(el => this.getDoublesObj(el.objectId)[0].players.map(el => this.getUserObj(el)[0].nickname).join('/'))
+              el.scores = (this.queue[el.queueKey] && this.queue[el.queueKey].state !== 'upcoming')
               ? this.queue[el.queueKey].lastSnapshot.matchGames.map(el => el.scores.join(':')).join(' ')
-              : '-'
+              : '未进行'
               return el
             })
           }
@@ -173,7 +199,8 @@ div
       back () {
         window.history.back()
       },
-      getUserObj
+      getUserObj,
+      getDoublesObj
     },
     ready () {
       window.vm = this

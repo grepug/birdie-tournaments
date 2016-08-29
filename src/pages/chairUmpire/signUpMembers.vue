@@ -45,7 +45,7 @@ div
   import AV from '../../js/AV'
   import {isSingle, groupArr, arrGroup, toArray} from '../../js/utils'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
-  import {addOthersUserObj} from '../../vuex/actions/user'
+  import {addOthersUserObj, addDoubles} from '../../vuex/actions/user'
   import Sortable from 'sortablejs'
   import {getUserObj} from '../../js/methods'
 
@@ -62,21 +62,35 @@ div
       getters: {
         myChairUmpiredTournaments: ({tournaments}) => tournaments.chairUmpiredTournaments,
         otherUserObjs: ({user}) => user.userObjs,
-        userObj: ({user}) => user.userObj
+        userObj: ({user}) => user.userObj,
+        doubles: ({user}) => user.doubles
       },
       actions: {
         addChairUmpiredTournaments,
-        addOthersUserObj
+        addOthersUserObj,
+        addDoubles
       }
     },
     route: {
       data ({next}) {
+        const tournamentObjId = this.$route.query.main
+        const subTournamentObjId = this.$route.query.sub
         return this.addChairUmpiredTournaments()
+        .then(() => {
+          var thisTournament = _.find(this.myChairUmpiredTournaments, {objectId: tournamentObjId})
+          var thisSubTournament = _.find(thisTournament.subTournaments, {objectId: subTournamentObjId})
+          if (isSingle(thisSubTournament.discipline)) return this.addOthersUserObj(thisSubTournament.signUpMembers)
+          console.log(thisSubTournament.signUpMembers)
+          return this.addDoubles(thisSubTournament.signUpMembers)
+          .then(ret => {
+            return ret ? this.addOthersUserObj(ret) : Promise.resolve()
+          })
+        })
         .then(() => {
           return AV.Cloud.run('tournamentRealtime', {
             method: 'getSubTournamentGroups',
-            tournamentObjId: this.$route.query.main,
-            subTournamentObjId: this.$route.query.sub
+            tournamentObjId,
+            subTournamentObjId
           })
         }).then(ret => {
           this.groupsStage = toArray(ret)
@@ -129,7 +143,15 @@ div
           })
         }
         return signUpMembers.map(el => {
-          return _.find(this.doubles, {objectId: el})
+          var obj = _.find(this.doubles, {objectId: el})
+          var players = obj.players.map(el => {
+            return this.getUserObj(el)[0]
+          })
+          return {
+            nickname: players.map(el => el.nickname).join(' / '),
+            objectId: obj.objectId,
+            sex: players.map(el => el.sex).join(' / ')
+          }
         })
       },
       signUpMembersGrouped () {
