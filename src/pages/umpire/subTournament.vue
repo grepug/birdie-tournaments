@@ -41,8 +41,8 @@ div
   import _ from 'lodash'
   import AV from '../../js/AV'
   import {historyBack, getStageCN, isSingle} from '../../js/utils'
-  import {addOthersUserObj} from '../../vuex/actions/user'
-  import {getUserObj} from '../../js/methods'
+  import {addOthersUserObj, addDoubles} from '../../vuex/actions/user'
+  import {getUserObj, getDoublesObj} from '../../js/methods'
 
   export default {
     components: {
@@ -60,14 +60,19 @@ div
           this.queue = ret.queue
           this.courts = ret.courts
           this.groups = ret.groups
-          if (isSingle(ret.discipline)) {
-            return this.addOthersUserObj(_.flattenDeep(_.map(ret.queue, (val) => {
-              if (ret.courts[val.courtIndex].umpire === this.userObj.objectId) {
-                return val.stage.teams.map(el => el)
-              }
-            })))
+          this.isSingle = isSingle(ret.discipline)
+          var teams = _.flattenDeep(_.map(ret.queue, (val) => {
+            if (ret.courts[val.courtIndex].umpire === this.userObj.objectId) {
+              return val.stage.teams.map(el => el)
+            }
+          }))
+          if (this.isSingle) {
+            return this.addOthersUserObj(teams)
           }
-          return // doubles
+          return this.addDoubles(teams)
+          .then(ret => {
+            this.addOthersUserObj(ret)
+          })
         })
       }
     },
@@ -77,7 +82,8 @@ div
         otherUserObjs: ({user}) => user.userObjs
       },
       actions: {
-        addOthersUserObj
+        addOthersUserObj,
+        addDoubles
       }
     },
     data () {
@@ -92,11 +98,19 @@ div
       myQueue () {
         return _.map(this.queue, (val, key) => {
           var {stage, courtIndex, matchSettings, state} = val
+          var vs
           if (this.courts[val.courtIndex].umpire !== this.userObj.objectId) return
+          if (this.isSingle) {
+            vs = val.stage.teams.map(el =>
+              this.getUserObj(el)[0].nickname
+            ).join(' vs ')
+          } else {
+            vs = val.stage.teams.map(el =>
+              this.getDoublesObj(el)[0].players.map(el => this.getUserObj(el)[0].nickname).join('/')
+            ).join(' vs ')
+          }
           return {
-            vs: val.stage.teams.map(el => {
-              return this.getUserObj(el)[0].nickname
-            }).join(' vs '),
+            vs,
             stage: getStageCN(stage),
             court: this.courts[courtIndex].name,
             courtIndex,
@@ -117,6 +131,7 @@ div
     methods: {
       historyBack,
       getUserObj,
+      getDoublesObj,
       refresh: () => window.location.reload(),
       go (index) {
         if (this.myQueue.filter(x => {
