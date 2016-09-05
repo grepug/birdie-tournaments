@@ -9,7 +9,7 @@ export const find = function (obj, objectId) {
 }
 
 export const exchange = function (index) {
-  return index === 0 ? 1 : 0
+  return parseInt(index) === 0 ? 1 : 0
 }
 
 export const int = parseInt

@@ -320,6 +320,7 @@ export default {
     matchComplete () {
       clock.cancel()
       this.loadingToastShow = true
+      console.log(snapshot.get(1))
       return AV.Cloud.run('tournamentRealtime', {
         method: 'matchComplete',
         tournamentObjId: this.$route.query.main,

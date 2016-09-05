@@ -60,7 +60,7 @@ export default {
     var item = window.localStorage.getItem(KEY)
     item = item && JSON.parse(item)
     if (last) {
-      return _.last(item, last)
+      return _.nth(item, -last)
     }
     return item
   }

@@ -25,6 +25,12 @@ export default function (store) {
     } else if (mutation.type === 'RESET_GAME_SCORES') {
       snapshot.save(state)
       snapshotRef.set(state.match)
+    } else if (mutation.type === 'SET_LAST_SCORED_TEAM') {
+      snapshot.save(state)
+      snapshotRef.set(state.match)
+    } else if (mutation.type === 'SET_WINNER_INDEX') {
+      snapshot.save(state)
+      snapshotRef.set(state.match)
     }
   })
 }
