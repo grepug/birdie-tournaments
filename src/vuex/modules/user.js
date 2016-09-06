@@ -4,7 +4,8 @@ const state = {
   isUserLoged: false,
   userObj: null,
   userObjs: [],
-  doubles: []
+  doubles: [],
+  bigTeams: []
 }
 
 const mutations = {
@@ -24,6 +25,12 @@ const mutations = {
     doublesObjs.forEach(obj => {
       var r = _.find(state.doubles, {objectId: obj.objectId})
       r || state.doubles.push(obj)
+    })
+  },
+  ADD_BIG_TEAMS (state, obj) {
+    obj.forEach(obj => {
+      var r = _.find(state.bigTeams, {objectId: obj.objectId})
+      r || state.bigTeams.push(obj)
     })
   }
 }

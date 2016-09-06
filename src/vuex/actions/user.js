@@ -33,3 +33,18 @@ export const addDoubles = function ({dispatch, state}, doublesObjIds) {
     return Promise.resolve(_.flattenDeep(ret.map(el => el.players)))
   }).catch(err => console.log(err))
 }
+
+export const addBigTeams = function ({dispatch, state}, objs) {
+  var unstoredObjs = beArray(objs).map(id => {
+    return _.find(state.user.bigTeams, {objectId: id}) ? null : id
+  }).filter(x => x)
+  if (!unstoredObjs.length) return Promise.resolve()
+  return AV.Cloud.run('bigTeams', {
+    method: 'getBigTeamsByIds',
+    bigTeamsObjIds: unstoredObjs
+  }).then(ret => {
+    if (!ret || !ret.length) return
+    dispatch('ADD_BIG_TEAMS', ret)
+    // return Promise.resolve(_.flattenDeep(ret.map(el => )))
+  }).catch(err => console.log(err))
+}

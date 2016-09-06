@@ -85,7 +85,7 @@
         subTournaments: [],
         disciplineOptions: [{text: '男子单打', value: 'ms'}, {text: '双打', value: 'd'}],
         disciplineSelected: 'ms',
-        tournamentSys: [{text: '淘汰赛', value: 'singleElimination'}, {text: '小组循环后淘汰', value: 'group'}, {text: '天梯积分赛', value: 'ladder'}],
+        tournamentSys: [{text: '淘汰赛', value: 'singleElimination'}, {text: '小组循环后淘汰', value: 'group'}, {text: '天梯积分赛', value: 'ladder'}, {text: '团体赛', value: 'bigTeam'}],
         tournamentSysSelected: 'singleElimination',
         bestOf: [{text: '三局两胜', value: '3'}, {text: '一局一胜', value: '1'}, {text: '五局三胜', value: '5'}],
         scoringSysSelected: '21',

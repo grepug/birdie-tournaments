@@ -45,7 +45,7 @@ div
   import AV from '../../js/AV'
   import {isSingle, groupArr, arrGroup, toArray} from '../../js/utils'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
-  import {addOthersUserObj, addDoubles} from '../../vuex/actions/user'
+  import {addOthersUserObj, addDoubles, addBigTeams} from '../../vuex/actions/user'
   import Sortable from 'sortablejs'
   import {getUserObj} from '../../js/methods'
 
@@ -68,7 +68,8 @@ div
       actions: {
         addChairUmpiredTournaments,
         addOthersUserObj,
-        addDoubles
+        addDoubles,
+        addBigTeams
       }
     },
     route: {
@@ -79,9 +80,11 @@ div
         .then(() => {
           var thisTournament = _.find(this.myChairUmpiredTournaments, {objectId: tournamentObjId})
           var thisSubTournament = _.find(thisTournament.subTournaments, {objectId: subTournamentObjId})
-          if (isSingle(thisSubTournament.discipline)) return this.addOthersUserObj(thisSubTournament.signUpMembers)
-          console.log(thisSubTournament.signUpMembers)
-          return this.addDoubles(thisSubTournament.signUpMembers)
+          if (thisSubTournament.tournamentSys !== 'bigTeam') {
+            if (isSingle(thisSubTournament.discipline)) return this.addOthersUserObj(thisSubTournament.signUpMembers)
+            return this.addDoubles(thisSubTournament.signUpMembers)
+          }
+          return this.addBigTeams(thisSubTournament.signUpMembers)
           .then(ret => {
             return ret ? this.addOthersUserObj(ret) : Promise.resolve()
           })
