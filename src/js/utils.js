@@ -46,6 +46,11 @@ export const isSingle = function (discipline) {
   return false
 }
 
+export const isBigTeam = function (sys) {
+  if (sys.toLowerCase().indexOf('bigteam') !== -1) return true
+  return false
+}
+
 export const duplicate = function (obj) {
   return JSON.parse(JSON.stringify(obj))
 }

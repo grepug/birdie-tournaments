@@ -43,11 +43,11 @@ div
   } from 'vue-weui'
   import _ from 'lodash'
   import AV from '../../js/AV'
-  import {isSingle, groupArr, arrGroup, toArray} from '../../js/utils'
+  import {isSingle, isBigTeam, groupArr, arrGroup, toArray} from '../../js/utils'
   import {addChairUmpiredTournaments} from '../../vuex/actions/tournaments'
   import {addOthersUserObj, addDoubles, addBigTeams} from '../../vuex/actions/user'
   import Sortable from 'sortablejs'
-  import {getUserObj} from '../../js/methods'
+  import {getUserObj, getBigTeamsObj} from '../../js/methods'
 
   export default {
     components: {
@@ -80,13 +80,15 @@ div
         .then(() => {
           var thisTournament = _.find(this.myChairUmpiredTournaments, {objectId: tournamentObjId})
           var thisSubTournament = _.find(thisTournament.subTournaments, {objectId: subTournamentObjId})
-          if (thisSubTournament.tournamentSys !== 'bigTeam') {
+          if (!isBigTeam(thisSubTournament.tournamentSys)) {
             if (isSingle(thisSubTournament.discipline)) return this.addOthersUserObj(thisSubTournament.signUpMembers)
             return this.addDoubles(thisSubTournament.signUpMembers)
           }
           return this.addBigTeams(thisSubTournament.signUpMembers)
           .then(ret => {
-            return ret ? this.addOthersUserObj(ret) : Promise.resolve()
+            return !ret ? Promise.resolve()
+            : this.addOthersUserObj(ret.players)
+            .then(() => this.addDoubles(ret.doubles))
           })
         })
         .then(() => {
@@ -139,21 +141,31 @@ div
       signUpMembers () {
         var signUpMembers = this.subTournament.signUpMembers
         if (!signUpMembers) return []
-        if (isSingle(this.subTournament.discipline)) {
+        if (!isBigTeam(this.subTournament.tournamentSys)) {
+          if (isSingle(this.subTournament.discipline)) {
+            return signUpMembers.map(el => {
+              if (el === this.userObj.objectId) return this.userObj
+              return _.find(this.otherUserObjs, {objectId: el})
+            })
+          }
           return signUpMembers.map(el => {
-            if (el === this.userObj.objectId) return this.userObj
-            return _.find(this.otherUserObjs, {objectId: el})
+            var obj = _.find(this.doubles, {objectId: el})
+            var players = obj.players.map(el => {
+              return this.getUserObj(el)[0]
+            })
+            return {
+              nickname: players.map(el => el.nickname).join(' / '),
+              objectId: obj.objectId,
+              sex: players.map(el => el.sex).join(' / ')
+            }
           })
         }
         return signUpMembers.map(el => {
-          var obj = _.find(this.doubles, {objectId: el})
-          var players = obj.players.map(el => {
-            return this.getUserObj(el)[0]
-          })
+          var bigTeam = this.getBigTeamsObj(el)[0]
+          console.log(bigTeam)
           return {
-            nickname: players.map(el => el.nickname).join(' / '),
-            objectId: obj.objectId,
-            sex: players.map(el => el.sex).join(' / ')
+            nickname: bigTeam.name,
+            objectId: bigTeam.objectId
           }
         })
       },
@@ -208,6 +220,7 @@ div
       },
       isSingle,
       getUserObj,
+      getBigTeamsObj,
       openSortable () {
         Array.prototype.forEach.call(document.querySelectorAll('.group .weui_cells'), (el, index) => {
           Sortable.create(el, {
@@ -232,6 +245,19 @@ div
         var {query} = this.$route
         switch (this.orderMethod) {
           case 'orderByGroups':
+            if (isBigTeam(this.subTournament.tournamentSys)) {
+              return AV.Cloud.run('tournamentRealtime', {
+                method: 'saveSubTournamentOrderBigTeam',
+                tournamentObjId: query.main,
+                subTournamentObjId: query.sub,
+                order,
+                stage: this.orderMethod,
+                discipline: this.subTournament.discipline
+              }).then(ret => {
+                console.log(ret)
+                this.sortableState = 'closed'
+              }).catch(err => console.log(err))
+            }
             return AV.Cloud.run('tournamentRealtime', {
               method: 'saveSubTournamentOrder',
               tournamentObjId: query.main,

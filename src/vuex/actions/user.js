@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import AV from '../../js/AV'
-import {beArray} from '../../js/utils'
+import {beArray, isSingle} from '../../js/utils'
 
 export const addOthersUserObj = function ({dispatch, state}, userObjIds) {
   var unstoredObjs = beArray(userObjIds).map(id => {
@@ -44,7 +44,12 @@ export const addBigTeams = function ({dispatch, state}, objs) {
     bigTeamsObjIds: unstoredObjs
   }).then(ret => {
     if (!ret || !ret.length) return
+    console.log(ret)
     dispatch('ADD_BIG_TEAMS', ret)
-    // return Promise.resolve(_.flattenDeep(ret.map(el => )))
+    return Promise.resolve({
+      doubles: _.flattenDeep(ret.map(el => _.map(el.playersByDisciplines, (v, k) => !isSingle(k) && v).filter(x => x))),
+      singles: _.flattenDeep(ret.map(el => _.map(el.playersByDisciplines, (v, k) => isSingle(k) && v).filter(x => x))),
+      players: _.flatten(ret.map(el => el.players))
+    })
   }).catch(err => console.log(err))
 }

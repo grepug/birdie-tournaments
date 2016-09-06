@@ -16,3 +16,8 @@ export const getDoublesObj = function (ids) {
     return _.find(user.doubles, {objectId: el}) || {}
   })
 }
+
+export const getBigTeamsObj = function (ids) {
+  var user = this.$store.state.user
+  return beArray(ids).map(el => _.find(user.bigTeams, {objectId: el}) || {})
+}
