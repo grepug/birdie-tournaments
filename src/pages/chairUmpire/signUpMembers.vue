@@ -83,6 +83,7 @@ div
           if (!isBigTeam(thisSubTournament.tournamentSys)) {
             if (isSingle(thisSubTournament.discipline)) return this.addOthersUserObj(thisSubTournament.signUpMembers)
             return this.addDoubles(thisSubTournament.signUpMembers)
+            .then(ret => this.addOthersUserObj(ret))
           }
           return this.addBigTeams(thisSubTournament.signUpMembers)
           .then(ret => {
