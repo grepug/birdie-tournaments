@@ -105,6 +105,7 @@ export default {
           switch (key) {
             case 'groups':
               this.groups = val
+              console.log(this.groups)
               var objs = val.map(el => {
                 return el.teams.map(el => el.objectId)
               })
@@ -170,25 +171,29 @@ export default {
   },
   computed: {
     preparingMatchesOptions () {
+      console.log(this.groups)
       var preparingMatches = _.flattenDeep(this.groups.map((group, groupIndex) => {
         return group.matches.map((el, matchIndex) => {
           if (el.state === 'preparing') {
+            console.log(1)
             var text
             if (this.isSingle) {
               text = el.teams.map(el => {
                 return this.getUserObj(el.objectId)[0].nickname
               }).join(' vs ') + ` 组${groupIndex + 1}场${matchIndex + 1}`
+            } else {
+              text = el.teams.map(el => {
+                return this.getDoublesObj(el.objectId)[0].players.map(el => {
+                  return this.getUserObj(el)[0].nickname
+                }).join('/')
+              }).join(' vs ') + ` 组${groupIndex + 1}场${matchIndex + 1}`
             }
-            text = el.teams.map(el => {
-              return this.getDoublesObj(el.objectId)[0].players.map(el => {
-                return this.getUserObj(el)[0].nickname
-              }).join('/')
-            }).join(' vs ') + ` 组${groupIndex + 1}场${matchIndex + 1}`
             var teamIndex = _.flatten(el.teams.map(el => {
               return group.teams.map((el2, index) => {
                 if (el.objectId === el2.objectId) return index
               })
             })).filter(x => x === 0 ? true : x)
+            console.log(text)
             return {
               text,
               value: JSON.stringify({

@@ -38,6 +38,8 @@ div
         span(slot="body") 设置场地 / 裁判
       link-cell(@click="go('chairUmpireQueue')")
         span(slot="body") 比赛队列
+      link-cell(@click="go('chairUmpireLadder')")
+        span(slot="body") 天梯队列
 
 </template>
 
